@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Vulkan/vulkan_core.h>
+
 struct GLFWwindow;
 
 namespace vul
@@ -23,7 +25,9 @@ namespace vul
 
 	private:
 		GLFWwindow* createWindow() const;
+		VkInstance createInstance() const;
 
 		GLFWwindow* const m_pWindow;
+		VkInstance m_Instance;
 	};
 }
