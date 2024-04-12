@@ -45,12 +45,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)Builds\$(Configuration) ($(Platform))\</OutDir>
-    <IntDir>$(SolutionDir)Builds\Intermediate\$(Configuration) ($(Platform))\</IntDir>
+    <OutDir>$(ProjectDir)Builds\$(Configuration) ($(Platform))\</OutDir>
+    <IntDir>$(ProjectDir)Builds\Intermediate\$(Configuration) ($(Platform))\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)Builds\$(Configuration) ($(Platform))\</OutDir>
-    <IntDir>$(SolutionDir)Builds\Intermediate\$(Configuration) ($(Platform))\</IntDir>
+    <OutDir>$(ProjectDir)Builds\$(Configuration) ($(Platform))\</OutDir>
+    <IntDir>$(ProjectDir)Builds\Intermediate\$(Configuration) ($(Platform))\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -62,16 +62,16 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)External;$(SolutionDir)External\VulkanSDK\Include;$(SolutionDir)External\GLFW\include;$(SolutionDir)External\VLD\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include;$(ProjectDir)External\VLD\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;vld.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)External\VulkanSDK\Lib;$(SolutionDir)External\GLFW\lib-vc2022;$(SolutionDir)External\VLD\lib\Win64;$(SolutionDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)External\VulkanSDK\Lib;$(ProjectDir)External\GLFW\lib-vc2022;$(ProjectDir)External\VLD\lib\Win64;$(ProjectDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)External\VLD\bin\Win64\*" "$(TargetDir)" /y /q</Command>
+      <Command>xcopy $(ProjectDir)External\VLD\bin\Win64\*" "$(TargetDir)" /y /q</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -87,7 +87,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)External;$(SolutionDir)External\VulkanSDK\Include;$(SolutionDir)External\GLFW\include;$(SolutionDir)External\VLD\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include;$(ProjectDir)External\VLD\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,7 +95,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;vld.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)External\VulkanSDK\Lib;$(SolutionDir)External\GLFW\lib-vc2022;$(SolutionDir)External\VLD\lib\Win64;$(SolutionDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)External\VulkanSDK\Lib;$(ProjectDir)External\GLFW\lib-vc2022;$(ProjectDir)External\VLD\lib\Win64;$(ProjectDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,2 +1,2 @@
-External/VulkanSDK/Lib/shaderc_combinedd.lib filter=lfs diff=lfs merge=lfs -text
-External/VulkanSDK/Lib/SPIRV-Tools-optd.lib filter=lfs diff=lfs merge=lfs -text
+Vulkan/External/VulkanSDK/Lib/shaderc_combinedd.lib filter=lfs diff=lfs merge=lfs -text
+Vulkan/External/VulkanSDK/Lib/SPIRV-Tools-optd.lib filter=lfs diff=lfs merge=lfs -text
