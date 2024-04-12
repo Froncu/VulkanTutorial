@@ -292,6 +292,22 @@ std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>>
 	return vpSwapChainImageViews;
 }
 
+VkShaderModule vul::createShaderModule(std::vector<std::uint32_t> const& vBytecode, VkDevice const logicalDevice)
+{
+	VkShaderModuleCreateInfo shaderModuleCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO },
+		.codeSize{ vBytecode.size() },
+		.pCode{ vBytecode.data() }
+	};
+
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateShaderModule() failed!");
+
+	return shaderModule;
+}
+
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
 {
 	std::uint32_t availableInstanceExtensionCount;

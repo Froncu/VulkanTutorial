@@ -55,6 +55,9 @@ namespace vul
 	[[nodiscard("created swap chain image views ignored!")]]
 	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkDevice const logicalDevice);
 
+	[[nodiscard("handle to shader module ignored!")]]
+	VkShaderModule createShaderModule(std::vector<std::uint32_t> const& vBytecode, VkDevice const logicalDevice);
+
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 
