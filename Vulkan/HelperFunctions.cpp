@@ -254,7 +254,7 @@ VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice 
 	return swapChain;
 }
 
-std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vul::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkExtent2D const swapChainImageExtent, VkDevice const logicalDevice)
+std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vul::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
 {
 	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>>  vpSwapChainImageViews{};
 	for (VkImage swapChainImage : vSwapChainImages)
