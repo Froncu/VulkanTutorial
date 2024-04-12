@@ -12,10 +12,13 @@ namespace vul
 	struct QueueFamilyIndices final
 	{
 		std::optional<std::uint32_t> graphics{};
+		std::optional<std::uint32_t> present{};
 
 		bool isComplete() const
 		{
-			return graphics.has_value();
+			return 
+				graphics.has_value() and
+				present.has_value();
 		}
 	};
 
@@ -25,11 +28,14 @@ namespace vul
 	[[nodiscard("handle to created instance ignored!")]]
 	VkInstance createInstance();
 
+	[[nodiscard("handle to window surface ignored!")]]
+	VkSurfaceKHR createWindowSurface(VkInstance const instance, GLFWwindow* const pWindow);
+
 	[[nodiscard("handle to suited physical device ignored!")]]
-	VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance const instance);
+	VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface);
 
 	[[nodiscard("handle to logical device ignored!")]]
-	VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice);
+	VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
 
 	[[nodiscard("handle to queue ignored!")]]
 	VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex);
@@ -47,7 +53,7 @@ namespace vul
 	std::vector<VkQueueFamilyProperties> getAvailableQueueFamilies(VkPhysicalDevice const physicalDevice);
 
 	[[nodiscard("returned available queue families' indices ignored!")]]
-	QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice);
+	QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
 
 	[[nodiscard("extension's availability result ignored!")]]
 	bool isExtensionAvailable(std::string_view const extensionName);
@@ -56,5 +62,5 @@ namespace vul
 	bool isValidationLayerAvailable(std::string_view const validationLayerName);
 
 	[[nodiscard("physical device's suitability result ignored!")]]
-	bool isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice);
+	bool isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
 }

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <format>
+#include <set>
 
 #pragma region HelperFunctions
 GLFWwindow* vul::createWindow(int const width, int const height, std::string_view const title)
@@ -54,7 +55,16 @@ VkInstance vul::createInstance()
 	return instance;
 }
 
-VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance)
+VkSurfaceKHR vul::createWindowSurface(VkInstance const instance, GLFWwindow* const pWindow)
+{
+	VkSurfaceKHR windowSurface;
+	if (glfwCreateWindowSurface(instance, pWindow, nullptr, &windowSurface) != VkResult::VK_SUCCESS)
+		throw std::runtime_error("glfwCreateWindowSurface() failed!");
+
+	return windowSurface;
+}
+
+VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface)
 {
 	std::vector<VkPhysicalDevice> const vAvailablePhysicalDevices{ getAvailablePhysicalDevices(instance) };
 
@@ -63,9 +73,9 @@ VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance)
 		std::find_if
 		(
 			vAvailablePhysicalDevices.begin(), vAvailablePhysicalDevices.end(),
-			[](VkPhysicalDevice const physicalDevice)
+			[windowSurface](VkPhysicalDevice const physicalDevice)
 			{
-				return isPhysicalDeviceSuitable(physicalDevice);
+				return isPhysicalDeviceSuitable(physicalDevice, windowSurface);
 			}
 		)
 	};
@@ -76,24 +86,34 @@ VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance)
 	return *suitablePhysicalDeviceIterator;
 }
 
-VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice)
+VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
-	float constexpr queuePriority{ 1.0f };
-	VkDeviceQueueCreateInfo const logicalDeviceQueueFamilyCreateInfo
+	QueueFamilyIndices const availableQueueFamilyIndices{ getAvailableQueueFamiliesIndices(physicalDevice, windowSurface) };
+
+	std::set<std::uint32_t> sAvailableUniqueQueueFamilyIndices{ availableQueueFamilyIndices.graphics.value(), availableQueueFamilyIndices.present.value() };
+	std::vector<VkDeviceQueueCreateInfo> vLogicalDeviceQueueFamilyCreateInfos{};
+	for (std::uint32_t availableUniqueQueueFamilyIndex : sAvailableUniqueQueueFamilyIndices)
 	{
-		.sType{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO },
-		.queueFamilyIndex{ getAvailableQueueFamiliesIndices(physicalDevice).graphics.value() },
-		.queueCount{ 1 },
-		.pQueuePriorities{ &queuePriority }
-	};
+		float constexpr queuePriority{ 1.0f };
+		vLogicalDeviceQueueFamilyCreateInfos.emplace_back
+		(
+			VkDeviceQueueCreateInfo
+			{
+				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueFamilyIndex = availableUniqueQueueFamilyIndex,
+				.queueCount = 1,
+				.pQueuePriorities = &queuePriority
+			}
+		);
+	}
 
 	VkPhysicalDeviceFeatures const enabledPhysicalDeviceFeatures{};
 
 	VkDeviceCreateInfo const logicalDeviceCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO },
-		.queueCreateInfoCount{ 1 },
-		.pQueueCreateInfos{ &logicalDeviceQueueFamilyCreateInfo },
+		.queueCreateInfoCount{ static_cast<std::uint32_t>(vLogicalDeviceQueueFamilyCreateInfos.size()) },
+		.pQueueCreateInfos{ vLogicalDeviceQueueFamilyCreateInfos.data() },
 		.pEnabledFeatures{ &enabledPhysicalDeviceFeatures }
 	};
 
@@ -152,7 +172,7 @@ std::vector<VkQueueFamilyProperties> vul::getAvailableQueueFamilies(VkPhysicalDe
 	return vAvailableQueueFamilies;
 }
 
-vul::QueueFamilyIndices vul::getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice)
+vul::QueueFamilyIndices vul::getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
 	std::vector<VkQueueFamilyProperties> const vAvailableQueueFamilies{ getAvailableQueueFamilies(physicalDevice) };
 
@@ -163,6 +183,11 @@ vul::QueueFamilyIndices vul::getAvailableQueueFamiliesIndices(VkPhysicalDevice c
 	{
 		if (availableQueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			availableQueueFamilyIndices.graphics = index;
+
+		VkBool32 isPresentingToWindowSurfaceSupported;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, index, windowSurface, &isPresentingToWindowSurfaceSupported);
+		if (isPresentingToWindowSurfaceSupported)
+			availableQueueFamilyIndices.present = index;
 
 		++index;
 
@@ -201,8 +226,8 @@ bool vul::isValidationLayerAvailable(std::string_view const validationLayerName)
 	);
 }
 
-bool vul::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice)
+bool vul::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
-	return getAvailableQueueFamiliesIndices(physicalDevice).isComplete();
+	return getAvailableQueueFamiliesIndices(physicalDevice, windowSurface).isComplete();
 }
 #pragma endregion HelperFunctions
