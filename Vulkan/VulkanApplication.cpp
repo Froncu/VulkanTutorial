@@ -5,13 +5,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #undef GLFW_INCLUDE_VULKAN
-#include <xstring>
-#include <cstdint>
-#include <vector>
-#include <iostream>
-#include <stdexcept>
-#include <algorithm>
-#include <format>
 
 #pragma region Constructors/Destructor
 vul::VulkanApplication::VulkanApplication() :
@@ -21,12 +14,12 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pLogicalDevice{ createLogicalDevice(m_PhysicalDevice), std::bind(vkDestroyDevice, std::placeholders::_1, nullptr) },
 	m_GraphicsQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice).graphics.value(), 0) }
 {
-};
+}
 
 vul::VulkanApplication::~VulkanApplication()
 {
 	glfwTerminate();
-};
+}
 #pragma endregion Constructors/Destructor
 
 
