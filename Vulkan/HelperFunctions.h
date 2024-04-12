@@ -3,6 +3,8 @@
 #include <Vulkan/vulkan_core.h>
 #include <optional>
 #include <vector>
+#include <memory>
+#include <functional>
 #include <xstring>
 
 struct GLFWwindow;
@@ -49,6 +51,9 @@ namespace vul
 
 	[[nodiscard("handle to swap chain ignored!")]]
 	VkSwapchainKHR createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, VkDevice const logicalDevice, VkFormat& swapChainImageFormat, VkExtent2D& swapChainImageExtent);
+
+	[[nodiscard("created swap chain image views ignored!")]]
+	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkExtent2D const swapChainImageExtent, VkDevice const logicalDevice);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();

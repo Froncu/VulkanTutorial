@@ -41,5 +41,6 @@ namespace vul
 		VkFormat m_SwapChainImageFormat;
 		VkExtent2D m_SwapChainImageExtent;
 		std::vector<VkImage> const m_vSwapChainImages;
+		std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const m_vpSwapChainImageViews;
 	};
 }

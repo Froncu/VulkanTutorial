@@ -16,7 +16,8 @@ vul::VulkanApplication::VulkanApplication() :
 	m_GraphicsQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice, m_pWindowSurface.get()).graphics.value(), 0) },
 	m_PresentQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice, m_pWindowSurface.get()).present.value(), 0) },
 	m_pSwapChain{ createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_vSwapChainImages{ getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get()) }
+	m_vSwapChainImages{ getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get()) },
+	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_SwapChainImageExtent, m_pLogicalDevice.get()) }
 {
 }
 

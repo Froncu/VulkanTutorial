@@ -254,6 +254,44 @@ VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice 
 	return swapChain;
 }
 
+std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vul::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkExtent2D const swapChainImageExtent, VkDevice const logicalDevice)
+{
+	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>>  vpSwapChainImageViews{};
+	for (VkImage swapChainImage : vSwapChainImages)
+	{
+		VkImageViewCreateInfo const swapChainImageViewCreateInfo
+		{
+			.sType{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO },
+			.image{ swapChainImage },
+			.viewType{ VK_IMAGE_VIEW_TYPE_2D },
+			.format{ swapChainImageFormat },
+			.components
+			{
+				.r{ VK_COMPONENT_SWIZZLE_IDENTITY },
+				.g{ VK_COMPONENT_SWIZZLE_IDENTITY },
+				.b{ VK_COMPONENT_SWIZZLE_IDENTITY },
+				.a{ VK_COMPONENT_SWIZZLE_IDENTITY }
+			},
+			.subresourceRange
+			{
+				.aspectMask{ VK_IMAGE_ASPECT_COLOR_BIT },
+				.baseMipLevel{ 0 },
+				.levelCount{ 1 },
+				.baseArrayLayer{ 0 },
+				.layerCount{ 1 }
+			}
+		};
+
+		VkImageView swapChainImageView;
+		if (vkCreateImageView(logicalDevice, &swapChainImageViewCreateInfo, nullptr, &swapChainImageView) != VK_SUCCESS)
+			throw std::runtime_error("vkCreateImageView() failed!");
+
+		vpSwapChainImageViews.emplace_back(decltype(vpSwapChainImageViews)::value_type(swapChainImageView, std::bind(vkDestroyImageView, logicalDevice, std::placeholders::_1, nullptr)));
+	}
+
+	return vpSwapChainImageViews;
+}
+
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
 {
 	std::uint32_t availableInstanceExtensionCount;
