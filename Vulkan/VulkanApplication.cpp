@@ -40,16 +40,13 @@
 
 #pragma region Constructors/Destructor
 vul::VulkanApplication::VulkanApplication() :
-	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan") },
-	m_Instance{ createInstance() }
+	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan"), glfwDestroyWindow },
+	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) }
 {
 };
 
 vul::VulkanApplication::~VulkanApplication()
 {
-	vkDestroyInstance(m_Instance, nullptr);
-
-	glfwDestroyWindow(m_pWindow);
 	glfwTerminate();
 };
 #pragma endregion Constructors/Destructor
@@ -59,7 +56,7 @@ vul::VulkanApplication::~VulkanApplication()
 #pragma region PublicMethods
 void vul::VulkanApplication::run()
 {
-	while (!glfwWindowShouldClose(m_pWindow))
+	while (!glfwWindowShouldClose(m_pWindow.get()))
 		glfwPollEvents();
 }
 #pragma endregion PublicMethods
