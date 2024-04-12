@@ -71,7 +71,7 @@
       <AdditionalLibraryDirectories>$(ProjectDir)External\VulkanSDK\Lib;$(ProjectDir)External\GLFW\lib-vc2022;$(ProjectDir)External\VLD\lib\Win64;$(ProjectDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)External\VLD\bin\Win64\*" "$(TargetDir)" /y /q</Command>
+      <Command>xcopy "$(ProjectDir)External\VLD\bin\Win64\*" "$(TargetDir)" /y /q</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
