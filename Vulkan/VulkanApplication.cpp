@@ -10,7 +10,7 @@
 #include <format>
 
 #pragma region HelperFunctions
-[[nodiscard("handle to created window ignored!")]] GLFWwindow* createWindow(int width, int height, std::string_view title)
+[[nodiscard("handle to created window ignored!")]] GLFWwindow* createWindow(int const width, int const height, std::string_view const title)
 {
 	glfwInit();
 
@@ -20,7 +20,7 @@
 	return glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
 }
 
-std::vector<VkExtensionProperties> getAvailableExtensions()
+[[nodiscard("returned available extensions ignored!")]] std::vector<VkExtensionProperties> getAvailableExtensions()
 {
 	std::uint32_t availableExtensionCount;
 	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
@@ -30,21 +30,21 @@ std::vector<VkExtensionProperties> getAvailableExtensions()
 	return vAvaialbleExtensions;
 }
 
-bool isExtensionAvailable(std::string_view extensionName)
+[[nodiscard("extension's availability result ignored!")]] bool isExtensionAvailable(std::string_view const extensionName)
 {
-	const std::vector<VkExtensionProperties> vAvailableExtensions{ getAvailableExtensions() };
+	std::vector<VkExtensionProperties> const vAvailableExtensions{ getAvailableExtensions() };
 
 	return std::any_of
 	(
 		vAvailableExtensions.begin(), vAvailableExtensions.end(),
-		[extensionName](const VkExtensionProperties& availableExtension)
+		[extensionName](VkExtensionProperties const& availableExtension)
 		{
 			return extensionName == availableExtension.extensionName;
 		}
 	);
 };
 
-std::vector<VkLayerProperties> getAvailableValidationLayers()
+[[nodiscard("returned available validation layers ignored!")]] std::vector<VkLayerProperties> getAvailableValidationLayers()
 {
 	std::uint32_t availableValidationLayersCount;
 	vkEnumerateInstanceLayerProperties(&availableValidationLayersCount, nullptr);
@@ -54,14 +54,14 @@ std::vector<VkLayerProperties> getAvailableValidationLayers()
 	return vAvaialbleValidationLayers;
 }
 
-bool isValidationLayerAvailable(std::string_view validationLayerName)
+[[nodiscard("validation layer's availability result ignored!")]] bool isValidationLayerAvailable(std::string_view const validationLayerName)
 {
-	const std::vector<VkLayerProperties> vAvaialbleValidationLayers{ getAvailableValidationLayers() };
+	std::vector<VkLayerProperties> const vAvaialbleValidationLayers{ getAvailableValidationLayers() };
 
 	return std::any_of
 	(
 		vAvaialbleValidationLayers.begin(), vAvaialbleValidationLayers.end(),
-		[validationLayerName](const VkLayerProperties& availableValidationLayer)
+		[validationLayerName](VkLayerProperties const& availableValidationLayer)
 		{
 			return validationLayerName == availableValidationLayer.layerName;
 		}
@@ -71,9 +71,9 @@ bool isValidationLayerAvailable(std::string_view validationLayerName)
 [[nodiscard("handle to created instance ignored!")]] VkInstance createInstance()
 {
 #ifndef NDEBUG
-	const std::vector vRequiredValidationLayerNames{ "VK_LAYER_KHRONOS_validation" };
+	std::vector const vRequiredValidationLayerNames{ "VK_LAYER_KHRONOS_validation" };
 
-	for (std::string_view requiredValidationLayerName : vRequiredValidationLayerNames)
+	for (std::string_view const requiredValidationLayerName : vRequiredValidationLayerNames)
 		if (!isValidationLayerAvailable(requiredValidationLayerName))
 			throw std::runtime_error(std::format("validation layer {} is not available!", requiredValidationLayerName));
 #endif
@@ -81,8 +81,8 @@ bool isValidationLayerAvailable(std::string_view validationLayerName)
 	std::uint32_t requiredExtensionCount;
 	char const* const* const ppRequiredExtensionNames{ glfwGetRequiredInstanceExtensions(&requiredExtensionCount) };
 
-	const std::vector<std::string_view> vRequiredExtensionNames{ ppRequiredExtensionNames, ppRequiredExtensionNames + requiredExtensionCount };
-	for (std::string_view requiredExtensionName : vRequiredExtensionNames)
+	std::vector<std::string_view> const vRequiredExtensionNames{ ppRequiredExtensionNames, ppRequiredExtensionNames + requiredExtensionCount };
+	for (std::string_view const requiredExtensionName : vRequiredExtensionNames)
 		if (!isExtensionAvailable(requiredExtensionName))
 			throw std::runtime_error(std::format("extension {} is not available!", requiredExtensionName));
 
@@ -104,7 +104,7 @@ bool isValidationLayerAvailable(std::string_view validationLayerName)
 	return instance;
 }
 
-std::vector<VkPhysicalDevice> getAvailablePhysicalDevices(VkInstance instance)
+[[nodiscard("returned available physical devices ignored!")]] std::vector<VkPhysicalDevice> getAvailablePhysicalDevices(VkInstance const instance)
 {
 	std::uint32_t availablePhysicalDevicesCount;
 	vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, nullptr);
@@ -114,7 +114,7 @@ std::vector<VkPhysicalDevice> getAvailablePhysicalDevices(VkInstance instance)
 	return vAvailablePhysicalDevices;
 }
 
-std::vector<VkQueueFamilyProperties> getAvailableQueueFamilies(VkPhysicalDevice physicalDevice)
+[[nodiscard("returned available queue families ignored!")]] std::vector<VkQueueFamilyProperties> getAvailableQueueFamilies(VkPhysicalDevice const physicalDevice)
 {
 	std::uint32_t availableQueueFamiliesCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &availableQueueFamiliesCount, nullptr);
@@ -134,14 +134,14 @@ struct QueueFamilyIndices final
 	}
 };
 
-QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice physicalDevice)
+[[nodiscard("returned available queue families' indices ignored!")]] QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice)
 {
-	const std::vector<VkQueueFamilyProperties> vAvailableQueueFamilies{ getAvailableQueueFamilies(physicalDevice) };
+	std::vector<VkQueueFamilyProperties> const vAvailableQueueFamilies{ getAvailableQueueFamilies(physicalDevice) };
 
 	QueueFamilyIndices availableQueueFamilyIndices{};
 	int index{};
 
-	for (const VkQueueFamilyProperties& availableQueueFamily : vAvailableQueueFamilies)
+	for (VkQueueFamilyProperties const& availableQueueFamily : vAvailableQueueFamilies)
 	{
 		if (availableQueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			availableQueueFamilyIndices.graphics = index;
@@ -155,21 +155,21 @@ QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice physicalDev
 	return availableQueueFamilyIndices;
 }
 
-bool isPhysicalDeviceSuitable(VkPhysicalDevice physicalDevice)
+[[nodiscard("physical device's suitability result ignored!")]] bool isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice)
 {
 	return getAvailableQueueFamiliesIndices(physicalDevice).isComplete();
 }
 
-VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance instance)
+[[nodiscard("handle to suited physical device ignored!")]] VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance const instance)
 {
-	const std::vector<VkPhysicalDevice> vAvailablePhysicalDevices{ getAvailablePhysicalDevices(instance) };
+	std::vector<VkPhysicalDevice> const vAvailablePhysicalDevices{ getAvailablePhysicalDevices(instance) };
 
 	const auto suitablePhysicalDeviceIterator
 	{
 		std::find_if
 		(
 			vAvailablePhysicalDevices.begin(), vAvailablePhysicalDevices.end(),
-			[](VkPhysicalDevice physicalDevice)
+			[](VkPhysicalDevice const physicalDevice)
 			{
 				return isPhysicalDeviceSuitable(physicalDevice);
 			}
@@ -182,10 +182,10 @@ VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance instance)
 	return *suitablePhysicalDeviceIterator;
 }
 
-VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice)
+[[nodiscard("handle to logical device ignored!")]] VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice)
 {
-	constexpr float queuePriority{ 1.0f };
-	const VkDeviceQueueCreateInfo logicalDeviceQueueFamilyCreateInfo
+	float constexpr queuePriority{ 1.0f };
+	VkDeviceQueueCreateInfo const logicalDeviceQueueFamilyCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO },
 		.queueFamilyIndex{ getAvailableQueueFamiliesIndices(physicalDevice).graphics.value() },
@@ -193,9 +193,9 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice)
 		.pQueuePriorities{ &queuePriority }
 	};
 
-	const VkPhysicalDeviceFeatures enabledPhysicalDeviceFeatures{};
+	VkPhysicalDeviceFeatures const enabledPhysicalDeviceFeatures{};
 
-	const VkDeviceCreateInfo logicalDeviceCreateInfo
+	VkDeviceCreateInfo const logicalDeviceCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO },
 		.queueCreateInfoCount{ 1 },
@@ -210,7 +210,7 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice)
 	return logicalDevice;
 }
 
-VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex)
+[[nodiscard("handle to queue ignored!")]] VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex)
 {
 	VkQueue queueFamily;
 	vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queueFamily);
