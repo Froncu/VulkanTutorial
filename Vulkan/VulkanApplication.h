@@ -24,9 +24,6 @@ namespace vul
 		void run();
 
 	private:
-		GLFWwindow* createWindow() const;
-		VkInstance createInstance() const;
-
 		GLFWwindow* const m_pWindow;
 		VkInstance m_Instance;
 	};
