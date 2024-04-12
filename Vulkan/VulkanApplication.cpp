@@ -103,6 +103,84 @@ bool isValidationLayerAvailable(std::string_view validationLayerName)
 
 	return instance;
 }
+
+std::vector<VkPhysicalDevice> getAvailablePhysicalDevices(VkInstance instance)
+{
+	std::uint32_t availablePhysicalDevicesCount;
+	vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, nullptr);
+	std::vector<VkPhysicalDevice> vAvailablePhysicalDevices(availablePhysicalDevicesCount);
+	vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, vAvailablePhysicalDevices.data());
+
+	return vAvailablePhysicalDevices;
+}
+
+std::vector<VkQueueFamilyProperties> getAvailableQueueFamilies(VkPhysicalDevice physicalDevice)
+{
+	std::uint32_t availableQueueFamiliesCount;
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &availableQueueFamiliesCount, nullptr);
+	std::vector<VkQueueFamilyProperties> vAvailableQueueFamilies(availableQueueFamiliesCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &availableQueueFamiliesCount, vAvailableQueueFamilies.data());
+
+	return vAvailableQueueFamilies;
+}
+
+struct QueueFamilyIndices final
+{
+	std::optional<std::uint32_t> graphics{};
+
+	bool isComplete() const
+	{
+		return graphics.has_value();
+	}
+};
+
+QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice physicalDevice)
+{
+	const std::vector<VkQueueFamilyProperties> vAvailableQueueFamilies{ getAvailableQueueFamilies(physicalDevice) };
+
+	QueueFamilyIndices availableQueueFamilyIndices{};
+	int index{};
+
+	for (const VkQueueFamilyProperties& availableQueueFamily : vAvailableQueueFamilies)
+	{
+		if (availableQueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			availableQueueFamilyIndices.graphics = index;
+
+		++index;
+
+		if (availableQueueFamilyIndices.isComplete())
+			break;
+	}
+
+	return availableQueueFamilyIndices;
+}
+
+bool isPhysicalDeviceSuitable(VkPhysicalDevice physicalDevice)
+{
+	return getAvailableQueueFamiliesIndices(physicalDevice).isComplete();
+}
+
+VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance instance)
+{
+	const std::vector<VkPhysicalDevice> vAvailablePhysicalDevices{ getAvailablePhysicalDevices(instance) };
+
+	const auto suitablePhysicalDeviceIterator
+	{
+		std::find_if
+		(
+			vAvailablePhysicalDevices.begin(), vAvailablePhysicalDevices.end(),
+			[](VkPhysicalDevice physicalDevice)
+			{
+				return isPhysicalDeviceSuitable(physicalDevice);
+			}
+		)
+	};
+
+	if (suitablePhysicalDeviceIterator == vAvailablePhysicalDevices.end())
+		throw std::runtime_error("no suitable physical device found!");
+
+	return *suitablePhysicalDeviceIterator;
+}
 #pragma endregion HelperFunctions
 
 
@@ -110,7 +188,8 @@ bool isValidationLayerAvailable(std::string_view validationLayerName)
 #pragma region Constructors/Destructor
 vul::VulkanApplication::VulkanApplication() :
 	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan"), glfwDestroyWindow },
-	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) }
+	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) },
+	m_PhysicalDevice{ pickSuitedPhysicalDevice(m_pInstance.get()) }
 {
 };
 
