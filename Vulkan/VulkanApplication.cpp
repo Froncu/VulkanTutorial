@@ -2,7 +2,9 @@
 
 #include "HelperFunctions.h"
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#undef GLFW_INCLUDE_VULKAN
 #include <xstring>
 #include <cstdint>
 #include <vector>
