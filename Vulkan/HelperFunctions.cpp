@@ -130,7 +130,7 @@ VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfa
 	return logicalDevice;
 }
 
-VkQueue vul::getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex)
+VkQueue vul::getHandleToQueue(VkDevice const logicalDevice, std::uint32_t const queueFamilyIndex, std::uint32_t const queueIndex)
 {
 	VkQueue queueFamily;
 	vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queueFamily);

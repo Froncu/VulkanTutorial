@@ -47,7 +47,7 @@ namespace vul
 	VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames);
 
 	[[nodiscard("handle to queue ignored!")]]
-	VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex);
+	VkQueue getHandleToQueue(VkDevice const logicalDevice, std::uint32_t const queueFamilyIndex, std::uint32_t const queueIndex);
 
 	[[nodiscard("handle to swap chain ignored!")]]
 	VkSwapchainKHR createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, VkDevice const logicalDevice, VkFormat& swapChainImageFormat, VkExtent2D& swapChainImageExtent);
