@@ -2,5 +2,27 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="HelperFunctions.cpp">
+      <Filter>HelperFunctions</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanApplication.cpp">
+      <Filter>VulkanApplication</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HelperFunctions.h">
+      <Filter>HelperFunctions</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanApplication.h">
+      <Filter>VulkanApplication</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="HelperFunctions">
+      <UniqueIdentifier>{0c2d1192-dbf2-43b3-90cd-9311b0784e6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VulkanApplication">
+      <UniqueIdentifier>{8ffc5e96-851a-4222-ae2f-431d0d19e4c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
