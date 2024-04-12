@@ -209,6 +209,14 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice)
 
 	return logicalDevice;
 }
+
+VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex)
+{
+	VkQueue queueFamily;
+	vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queueFamily);
+
+	return queueFamily;
+}
 #pragma endregion HelperFunctions
 
 
@@ -218,7 +226,8 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan"), glfwDestroyWindow },
 	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) },
 	m_PhysicalDevice{ pickSuitedPhysicalDevice(m_pInstance.get()) },
-	m_pLogicalDevice{ createLogicalDevice(m_PhysicalDevice), std::bind(vkDestroyDevice, std::placeholders::_1, nullptr) }
+	m_pLogicalDevice{ createLogicalDevice(m_PhysicalDevice), std::bind(vkDestroyDevice, std::placeholders::_1, nullptr) },
+	m_GraphicsQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice).graphics.value(), 0) }
 {
 };
 
