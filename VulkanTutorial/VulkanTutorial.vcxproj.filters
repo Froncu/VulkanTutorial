@@ -8,6 +8,9 @@
     <ClCompile Include="VulkanApplication.cpp">
       <Filter>VulkanApplication</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderCompiler.cpp">
+      <Filter>ShaderCompiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HelperFunctions.h">
@@ -16,6 +19,9 @@
     <ClInclude Include="VulkanApplication.h">
       <Filter>VulkanApplication</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderCompiler.h">
+      <Filter>ShaderCompiler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="HelperFunctions">
@@ -23,6 +29,9 @@
     </Filter>
     <Filter Include="VulkanApplication">
       <UniqueIdentifier>{8ffc5e96-851a-4222-ae2f-431d0d19e4c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ShaderCompiler">
+      <UniqueIdentifier>{5d14c2fe-be5f-4c57-b0f9-6c417716df39}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
