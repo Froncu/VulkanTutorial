@@ -181,6 +181,34 @@ VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance instance)
 
 	return *suitablePhysicalDeviceIterator;
 }
+
+VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice)
+{
+	constexpr float queuePriority{ 1.0f };
+	const VkDeviceQueueCreateInfo logicalDeviceQueueFamilyCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO },
+		.queueFamilyIndex{ getAvailableQueueFamiliesIndices(physicalDevice).graphics.value() },
+		.queueCount{ 1 },
+		.pQueuePriorities{ &queuePriority }
+	};
+
+	const VkPhysicalDeviceFeatures enabledPhysicalDeviceFeatures{};
+
+	const VkDeviceCreateInfo logicalDeviceCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO },
+		.queueCreateInfoCount{ 1 },
+		.pQueueCreateInfos{ &logicalDeviceQueueFamilyCreateInfo },
+		.pEnabledFeatures{ &enabledPhysicalDeviceFeatures }
+	};
+
+	VkDevice logicalDevice;
+	if (vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice) != VkResult::VK_SUCCESS)
+		throw std::runtime_error("vkCreateDevice() failed!");
+
+	return logicalDevice;
+}
 #pragma endregion HelperFunctions
 
 
@@ -189,7 +217,8 @@ VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance instance)
 vul::VulkanApplication::VulkanApplication() :
 	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan"), glfwDestroyWindow },
 	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) },
-	m_PhysicalDevice{ pickSuitedPhysicalDevice(m_pInstance.get()) }
+	m_PhysicalDevice{ pickSuitedPhysicalDevice(m_pInstance.get()) },
+	m_pLogicalDevice{ createLogicalDevice(m_PhysicalDevice), std::bind(vkDestroyDevice, std::placeholders::_1, nullptr) }
 {
 };
 

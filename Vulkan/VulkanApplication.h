@@ -30,5 +30,6 @@ namespace vul
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
 		std::unique_ptr<VkInstance_T, std::function<void(VkInstance_T*)>> const m_pInstance;
 		VkPhysicalDevice m_PhysicalDevice;
+		std::unique_ptr<VkDevice_T, std::function<void(VkDevice_T*)>> const m_pLogicalDevice;
 	};
 }
