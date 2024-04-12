@@ -4,6 +4,8 @@
 #include <memory>
 #include <functional>
 #include <optional>
+#include <array>
+#include <xstring>
 
 struct GLFWwindow;
 
@@ -11,6 +13,7 @@ namespace vul
 {
 	constexpr int g_WindowWidth{ 800 };
 	constexpr int g_WindowHeight{ 600 };
+	std::vector<std::string_view> const vPhysicalDeviceExtensionNames{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 	class VulkanApplication final
 	{
@@ -34,5 +37,9 @@ namespace vul
 		std::unique_ptr<VkDevice_T, std::function<void(VkDevice_T*)>> const m_pLogicalDevice;
 		VkQueue const m_GraphicsQueue;
 		VkQueue const m_PresentQueue;
+		std::unique_ptr<VkSwapchainKHR_T, std::function<void(VkSwapchainKHR_T*)>> const m_pSwapChain;
+		VkFormat m_SwapChainImageFormat;
+		VkExtent2D m_SwapChainImageExtent;
+		std::vector<VkImage> const m_vSwapChainImages;
 	};
 }

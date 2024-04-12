@@ -22,6 +22,13 @@ namespace vul
 		}
 	};
 
+	struct SwapChainSupportDetails final
+	{
+		VkSurfaceCapabilitiesKHR capabilities{};
+		std::vector<VkSurfaceFormatKHR> vFormats{};
+		std::vector<VkPresentModeKHR> vPresentModes{};
+	};
+
 	[[nodiscard("handle to created window ignored!")]]
 	GLFWwindow* createWindow(int const width, int const height, std::string_view const title);
 
@@ -32,16 +39,19 @@ namespace vul
 	VkSurfaceKHR createWindowSurface(VkInstance const instance, GLFWwindow* const pWindow);
 
 	[[nodiscard("handle to suited physical device ignored!")]]
-	VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface);
+	VkPhysicalDevice pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames);
 
 	[[nodiscard("handle to logical device ignored!")]]
-	VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
+	VkDevice createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames);
 
 	[[nodiscard("handle to queue ignored!")]]
 	VkQueue getHandleToQueue(VkDevice logicalDevice, std::uint32_t queueFamilyIndex, std::uint32_t queueIndex);
 
-	[[nodiscard("returned available extensions ignored!")]]
-	std::vector<VkExtensionProperties> getAvailableExtensions();
+	[[nodiscard("handle to swap chain ignored!")]]
+	VkSwapchainKHR createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, VkDevice const logicalDevice, VkFormat& swapChainImageFormat, VkExtent2D& swapChainImageExtent);
+
+	[[nodiscard("returned available instance extensions ignored!")]]
+	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 
 	[[nodiscard("returned available validation layers ignored!")]]
 	std::vector<VkLayerProperties> getAvailableValidationLayers();
@@ -49,18 +59,36 @@ namespace vul
 	[[nodiscard("returned available physical devices ignored!")]]
 	std::vector<VkPhysicalDevice> getAvailablePhysicalDevices(VkInstance const instance);
 
+	[[nodiscard("returned available physical device extensions ignored!")]]
+	std::vector<VkExtensionProperties> getAvailablePhysicalDeviceExtensions(VkPhysicalDevice const physicalDevice);
+
 	[[nodiscard("returned available queue families ignored!")]]
 	std::vector<VkQueueFamilyProperties> getAvailableQueueFamilies(VkPhysicalDevice const physicalDevice);
+
+	[[nodiscard("returned available physical device's window surface formats ignored!")]]
+	std::vector<VkSurfaceFormatKHR> getAvailablePhysicalDeviceWindowSurfaceFormats(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
+
+	[[nodiscard("returned available physical device's window surface formats ignored!")]]
+	std::vector<VkPresentModeKHR> getAvailablePhysicalDeviceWindowSurfacePresentModes(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
+
+	[[nodiscard("returned swap chain images ignored!")]]
+	std::vector<VkImage> getSwapChainImages(VkDevice const logicalDevice, VkSwapchainKHR const swapChain);
 
 	[[nodiscard("returned available queue families' indices ignored!")]]
 	QueueFamilyIndices getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
 
+	[[nodiscard("returned swap chain support details ignored!")]]
+	SwapChainSupportDetails getSwapChainSupportDetails(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
+
 	[[nodiscard("extension's availability result ignored!")]]
-	bool isExtensionAvailable(std::string_view const extensionName);
+	bool isInstanceExtensionAvailable(std::string_view const extensionName);
 
 	[[nodiscard("validation layer's availability result ignored!")]]
 	bool isValidationLayerAvailable(std::string_view const validationLayerName);
 
+	[[nodiscard("extension's availability result ignored!")]]
+	bool isPhysicalDeviceExtensionAvailable(std::string_view const physicalDeviceExtensionName, VkPhysicalDevice physicalDevice);
+
 	[[nodiscard("physical device's suitability result ignored!")]]
-	bool isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface);
+	bool isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames);
 }
