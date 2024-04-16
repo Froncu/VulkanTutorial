@@ -17,7 +17,10 @@ vul::VulkanApplication::VulkanApplication() :
 	m_PresentQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice, m_pWindowSurface.get()).present.value(), 0) },
 	m_pSwapChain{ createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vSwapChainImages{ getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get()) },
-	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get()) }
+	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get()) },
+	m_pPipelineLayout{ createPipelineLayout(m_pLogicalDevice.get()), std::bind(vkDestroyPipelineLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pRenderPass{ createRenderPass(m_SwapChainImageFormat, m_pLogicalDevice.get()), std::bind(vkDestroyRenderPass, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) }
 {
 }
 

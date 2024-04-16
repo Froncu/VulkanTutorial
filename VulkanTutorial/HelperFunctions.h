@@ -58,6 +58,15 @@ namespace vul
 	[[nodiscard("handle to shader module ignored!")]]
 	VkShaderModule createShaderModule(std::vector<std::uint32_t> const& vBytecode, VkDevice const logicalDevice);
 
+	[[nodiscard("handle to render pass ignored!")]]
+	VkRenderPass createRenderPass(VkFormat const swapChainImageFormat, VkDevice const logicalDevice);
+
+	[[nodiscard("handle to pipeline layout ignored!")]]
+	VkPipelineLayout createPipelineLayout(VkDevice const logicalDevice);
+
+	[[nodiscard("handle to pipeline ignored!")]]
+	VkPipeline createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass);
+
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 

@@ -1,5 +1,7 @@
 #include "HelperFunctions.h"
 
+#include "ShaderCompiler.h"
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #undef GLFW_INCLUDE_VULKAN
@@ -211,13 +213,13 @@ VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice 
 	VkSharingMode imageSharingMode;
 	uint32_t queueFamilyIndexCount;
 	uint32_t const* pQueueFamilyIndices;
-	if (availableQueueFamilyIndices.graphics != availableQueueFamilyIndices.present) 
+	if (availableQueueFamilyIndices.graphics != availableQueueFamilyIndices.present)
 	{
 		imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		queueFamilyIndexCount = 2;
 		pQueueFamilyIndices = aQueueFamilyIndices;
 	}
-	else 
+	else
 	{
 		imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		queueFamilyIndexCount = 0;
@@ -297,7 +299,7 @@ VkShaderModule vul::createShaderModule(std::vector<std::uint32_t> const& vByteco
 	VkShaderModuleCreateInfo shaderModuleCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO },
-		.codeSize{ vBytecode.size() },
+		.codeSize{ vBytecode.size() * 4 },
 		.pCode{ vBytecode.data() }
 	};
 
@@ -306,6 +308,195 @@ VkShaderModule vul::createShaderModule(std::vector<std::uint32_t> const& vByteco
 		throw std::runtime_error("vkCreateShaderModule() failed!");
 
 	return shaderModule;
+}
+
+VkRenderPass vul::createRenderPass(VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
+{
+	VkAttachmentDescription const colorAttachmentDescription
+	{
+		.format{ swapChainImageFormat },
+		.samples{ VK_SAMPLE_COUNT_1_BIT },
+		.loadOp{ VK_ATTACHMENT_LOAD_OP_CLEAR },
+		.storeOp{ VK_ATTACHMENT_STORE_OP_STORE },
+		.stencilLoadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE },
+		.stencilStoreOp{ VK_ATTACHMENT_STORE_OP_DONT_CARE },
+		.initialLayout{ VK_IMAGE_LAYOUT_UNDEFINED },
+		.finalLayout{ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR }
+	};
+
+	VkAttachmentReference const colorAttachmentReference
+	{
+		.layout{ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }
+	};
+
+	VkSubpassDescription const subpassDescription
+	{
+		.pipelineBindPoint{ VK_PIPELINE_BIND_POINT_GRAPHICS },
+		.colorAttachmentCount{ 1 },
+		.pColorAttachments{ &colorAttachmentReference }
+	};
+
+	VkRenderPassCreateInfo const renderPassCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO },
+		.attachmentCount{ 1 },
+		.pAttachments{ &colorAttachmentDescription },
+		.subpassCount{ 1 },
+		.pSubpasses{ &subpassDescription }
+	};
+
+	VkRenderPass renderPass;
+	if (vkCreateRenderPass(logicalDevice, &renderPassCreateInfo, nullptr, &renderPass) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateRenderPass() failed!");
+
+	return renderPass;
+}
+
+VkPipelineLayout vul::createPipelineLayout(VkDevice const logicalDevice)
+{
+	VkPipelineLayoutCreateInfo const pipelineLayoutCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO }
+	};
+
+	VkPipelineLayout pipelineLayout;
+	if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+		throw std::runtime_error("vkCreatePipelineLayout() failed!");
+
+	return pipelineLayout;
+}
+
+VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass)
+{
+	ShaderCompiler compiler{ "Shaders" };
+
+	std::unique_ptr<VkShaderModule_T, std::function<void(VkShaderModule_T*)>> const pVertexShaderModule
+	{
+		createShaderModule(compiler("hardCodedTriangle.vert", shaderc_shader_kind::shaderc_vertex_shader), logicalDevice),
+		std::bind(vkDestroyShaderModule, logicalDevice, std::placeholders::_1, nullptr)
+	};
+
+	std::unique_ptr<VkShaderModule_T, std::function<void(VkShaderModule_T*)>> const pFragmentShaderModule
+	{
+		createShaderModule(compiler("hardCodedTriangle.frag", shaderc_shader_kind::shaderc_fragment_shader), logicalDevice),
+		std::bind(vkDestroyShaderModule, logicalDevice, std::placeholders::_1, nullptr)
+	};
+
+	std::vector<VkPipelineShaderStageCreateInfo> const vShaderStageCreateInfos
+	{
+		{
+			.sType{ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO },
+			.stage{ VK_SHADER_STAGE_VERTEX_BIT },
+			.module{ pVertexShaderModule.get() },
+			.pName{ "main" }
+		},
+
+		{
+			.sType{ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO },
+			.stage{ VK_SHADER_STAGE_FRAGMENT_BIT },
+			.module{ pFragmentShaderModule.get() },
+			.pName{ "main" }
+		}
+	};
+
+	std::vector<VkDynamicState> const vDynamicStates
+	{
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo const dynamicStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO },
+		.dynamicStateCount{ static_cast<uint32_t>(vDynamicStates.size()) },
+		.pDynamicStates{ vDynamicStates.data() }
+	};
+
+	VkPipelineVertexInputStateCreateInfo const vertexInputStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO }
+	};
+
+	VkPipelineInputAssemblyStateCreateInfo const inputAssemblyStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO },
+		.topology{ VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST },
+		.primitiveRestartEnable{ VK_FALSE }
+	};
+
+	VkViewport const viewport
+	{
+		.width{ static_cast<float>(swapChainExtent.width) },
+		.height{ static_cast<float>(swapChainExtent.height) },
+		.maxDepth{ 1.0f }
+	};
+
+	VkRect2D const scissor
+	{
+		.extent = swapChainExtent
+	};
+
+	VkPipelineViewportStateCreateInfo const viewportStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO },
+		.viewportCount{ 1 },
+		.scissorCount{ 1 }
+	};
+
+	VkPipelineRasterizationStateCreateInfo const rasterizationStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO },
+		.depthClampEnable{ VK_FALSE },
+		.rasterizerDiscardEnable{ VK_FALSE },
+		.polygonMode{ VK_POLYGON_MODE_FILL },
+		.cullMode{ VK_CULL_MODE_BACK_BIT },
+		.frontFace{ VK_FRONT_FACE_CLOCKWISE },
+		.depthBiasEnable{ VK_FALSE },
+		.lineWidth{ 1.0f },
+	};
+
+	VkPipelineMultisampleStateCreateInfo const multisampleStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO },
+		.rasterizationSamples{ VK_SAMPLE_COUNT_1_BIT },
+		.sampleShadingEnable{ VK_FALSE }
+	};
+
+	VkPipelineColorBlendAttachmentState const colorBlendAttachmentState
+	{
+		.blendEnable{ VK_FALSE },
+		.colorWriteMask{ VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT }
+	};
+
+	VkPipelineColorBlendStateCreateInfo const colorBlendStateCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO },
+		.logicOpEnable{ VK_FALSE },
+		.attachmentCount{ 1 },
+		.pAttachments{ &colorBlendAttachmentState }
+	};
+
+	VkGraphicsPipelineCreateInfo const pipelineCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO },
+		.stageCount{ static_cast<std::uint32_t>(vShaderStageCreateInfos.size()) },
+		.pStages{ vShaderStageCreateInfos.data() },
+		.pVertexInputState{ &vertexInputStateCreateInfo },
+		.pInputAssemblyState{ &inputAssemblyStateCreateInfo },
+		.pViewportState{ &viewportStateCreateInfo },
+		.pRasterizationState{ &rasterizationStateCreateInfo },
+		.pMultisampleState{ &multisampleStateCreateInfo },
+		.pColorBlendState{ &colorBlendStateCreateInfo },
+		.pDynamicState{ &dynamicStateCreateInfo },
+		.layout{ pipelineLayout },
+		.renderPass{ renderPass }
+	};
+
+	VkPipeline pipeline;
+	if (vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline) != VK_SUCCESS)
+		throw std::runtime_error("vkCreatePipelineLayout() failed!");
+
+	return pipeline;
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
