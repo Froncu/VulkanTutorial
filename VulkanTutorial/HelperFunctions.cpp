@@ -499,6 +499,35 @@ VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const sw
 	return pipeline;
 }
 
+std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> vul::createFramebuffers(std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const& vSwapChainImageViews, VkRenderPass const renderPass, VkExtent2D const swapChainExtent, VkDevice const logicalDevice)
+{
+	std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> vpSwapChainFrameBuffers(vSwapChainImageViews.size());
+
+	for (size_t index{}; index < vSwapChainImageViews.size(); ++index)
+	{
+		VkImageView aAttachments[]{ vSwapChainImageViews[index].get() };
+
+		VkFramebufferCreateInfo framebufferCreateInfo
+		{
+			.sType{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO },
+			.renderPass{ renderPass },
+			.attachmentCount{ 1 },
+			.pAttachments{ aAttachments },
+			.width{ swapChainExtent.width },
+			.height{ swapChainExtent.height },
+			.layers{ 1 }
+		};
+
+		VkFramebuffer frameBuffer;
+		if (vkCreateFramebuffer(logicalDevice, &framebufferCreateInfo, nullptr, &frameBuffer) != VK_SUCCESS)
+			throw std::runtime_error("vkCreateFramebuffer() failed!");
+
+		vpSwapChainFrameBuffers[index] = { frameBuffer, std::bind(vkDestroyFramebuffer, logicalDevice, std::placeholders::_1, nullptr) };
+	}
+
+	return vpSwapChainFrameBuffers;
+}
+
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
 {
 	std::uint32_t availableInstanceExtensionCount;

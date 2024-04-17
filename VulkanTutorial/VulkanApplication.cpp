@@ -20,7 +20,8 @@ vul::VulkanApplication::VulkanApplication() :
 	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get()) },
 	m_pPipelineLayout{ createPipelineLayout(m_pLogicalDevice.get()), std::bind(vkDestroyPipelineLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_pRenderPass{ createRenderPass(m_SwapChainImageFormat, m_pLogicalDevice.get()), std::bind(vkDestroyRenderPass, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) }
+	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_vpSwapChainFrameBuffers{ createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get()) }
 {
 }
 

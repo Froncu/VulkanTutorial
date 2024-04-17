@@ -45,5 +45,6 @@ namespace vul
 		std::unique_ptr<VkPipelineLayout_T, std::function<void(VkPipelineLayout_T*)>> const m_pPipelineLayout;
 		std::unique_ptr<VkRenderPass_T, std::function<void(VkRenderPass_T*)>> const m_pRenderPass;
 		std::unique_ptr<VkPipeline_T, std::function<void(VkPipeline_T*)>> const m_pPipeline;
+		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const m_vpSwapChainFrameBuffers;
 	};
 }

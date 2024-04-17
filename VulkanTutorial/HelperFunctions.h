@@ -67,6 +67,9 @@ namespace vul
 	[[nodiscard("handle to pipeline ignored!")]]
 	VkPipeline createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass);
 
+	[[nodiscard("created framebuffers ignored!")]]
+	std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> createFramebuffers(std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const& vSwapChainImageViews, VkRenderPass const renderPass, VkExtent2D const swapChainExtent, VkDevice const logicalDevice);
+
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 
