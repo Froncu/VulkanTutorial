@@ -70,6 +70,14 @@ namespace vul
 	[[nodiscard("created framebuffers ignored!")]]
 	std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> createFramebuffers(std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const& vSwapChainImageViews, VkRenderPass const renderPass, VkExtent2D const swapChainExtent, VkDevice const logicalDevice);
 
+	[[nodiscard("handle to command pool ignored!")]]
+	VkCommandPool createCommandPool(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const surface, VkDevice const logicalDevice);
+
+	[[nodiscard("handle to command buffer ignored!")]]
+	VkCommandBuffer createCommandBuffer(VkCommandPool const commandPool, VkDevice const logicalDevice);
+
+	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<VkFramebuffer> const& vSwapChainFramebuffers, VkExtent2D const swapChainExtent);
+
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 

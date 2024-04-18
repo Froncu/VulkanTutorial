@@ -46,5 +46,7 @@ namespace vul
 		std::unique_ptr<VkRenderPass_T, std::function<void(VkRenderPass_T*)>> const m_pRenderPass;
 		std::unique_ptr<VkPipeline_T, std::function<void(VkPipeline_T*)>> const m_pPipeline;
 		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const m_vpSwapChainFrameBuffers;
+		std::unique_ptr<VkCommandPool_T, std::function<void(VkCommandPool_T*) >> const m_pCommandPool;
+		VkCommandBuffer const m_CommandBuffer;
 	};
 }

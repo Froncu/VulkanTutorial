@@ -528,6 +528,89 @@ std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*
 	return vpSwapChainFrameBuffers;
 }
 
+VkCommandPool vul::createCommandPool(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const surface, VkDevice const logicalDevice)
+{
+	QueueFamilyIndices const availableQueueFamilyIndices{ getAvailableQueueFamiliesIndices(physicalDevice, surface) };
+
+	VkCommandPoolCreateInfo const commandPoolCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO },
+		.flags{ VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT },
+		.queueFamilyIndex{ availableQueueFamilyIndices.graphics.value() }
+	};
+
+	VkCommandPool commandPool;
+	if (vkCreateCommandPool(logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateCommandPool() failed!");
+
+	return commandPool;
+}
+
+VkCommandBuffer vul::createCommandBuffer(VkCommandPool const commandPool, VkDevice const logicalDevice)
+{
+	VkCommandBufferAllocateInfo const allocateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO },
+		.commandPool{ commandPool },
+		.level{ VK_COMMAND_BUFFER_LEVEL_PRIMARY },
+		.commandBufferCount{ 1 }
+	};
+
+	VkCommandBuffer commandBuffer;
+	if (vkAllocateCommandBuffers(logicalDevice, &allocateInfo, &commandBuffer) != VK_SUCCESS)
+		throw std::runtime_error("vkAllocateCommandBuffers() failed!");
+
+	return commandBuffer;
+}
+
+void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<VkFramebuffer> const& vSwapChainFramebuffers, VkExtent2D const swapChainExtent)
+{
+	VkCommandBufferBeginInfo const commandBufferBeginInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO }
+	};
+
+	if (vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo) != VK_SUCCESS)
+		throw std::runtime_error("vkBeginCommandBuffer() failed!");
+
+	VkClearValue const clearColor{ .color{ 0.0f, 0.0f, 0.0f, 1.0f } };
+	VkRenderPassBeginInfo const renderPassBeginInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO },
+		.renderPass{ renderPass },
+		.framebuffer{ vSwapChainFramebuffers[imageIndex] },
+		.renderArea
+		{
+			.extent{ swapChainExtent }
+		},
+		.clearValueCount{ 1 },
+		.pClearValues{ &clearColor }
+	};
+	vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport const viewport
+	{
+		.width{ static_cast<float>(swapChainExtent.width) },
+		.height{ static_cast<float>(swapChainExtent.height) },
+		.minDepth{ 0.0f },
+		.maxDepth{ 1.0f }
+	};
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+	VkRect2D const scissor
+	{
+		.extent{ swapChainExtent }
+	};
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+		throw std::runtime_error("vkEndCommandBuffer() failed!");
+}
+
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
 {
 	std::uint32_t availableInstanceExtensionCount;
