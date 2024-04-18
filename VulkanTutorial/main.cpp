@@ -1,6 +1,5 @@
 #include "VulkanApplication.h"
 
-#include <vld.h>
 #include <stdexcept>
 #include <iostream>
 
