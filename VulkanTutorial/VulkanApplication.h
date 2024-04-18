@@ -31,6 +31,8 @@ namespace vul
 
 	private:
 		void render();
+		void recreateSwapChain();
+		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
 		std::unique_ptr<VkInstance_T, std::function<void(VkInstance_T*)>> const m_pInstance;
@@ -39,15 +41,15 @@ namespace vul
 		std::unique_ptr<VkDevice_T, std::function<void(VkDevice_T*)>> const m_pLogicalDevice;
 		VkQueue const m_GraphicsQueue;
 		VkQueue const m_PresentQueue;
-		std::unique_ptr<VkSwapchainKHR_T, std::function<void(VkSwapchainKHR_T*)>> const m_pSwapChain;
+		std::unique_ptr<VkSwapchainKHR_T, std::function<void(VkSwapchainKHR_T*)>> m_pSwapChain;
 		VkFormat m_SwapChainImageFormat;
 		VkExtent2D m_SwapChainImageExtent;
-		std::vector<VkImage> const m_vSwapChainImages;
-		std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const m_vpSwapChainImageViews;
+		std::vector<VkImage> m_vSwapChainImages;
+		std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> m_vpSwapChainImageViews;
 		std::unique_ptr<VkPipelineLayout_T, std::function<void(VkPipelineLayout_T*)>> const m_pPipelineLayout;
 		std::unique_ptr<VkRenderPass_T, std::function<void(VkRenderPass_T*)>> const m_pRenderPass;
 		std::unique_ptr<VkPipeline_T, std::function<void(VkPipeline_T*)>> const m_pPipeline;
-		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const m_vpSwapChainFrameBuffers;
+		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> m_vpSwapChainFrameBuffers;
 		std::unique_ptr<VkCommandPool_T, std::function<void(VkCommandPool_T*)>> const m_pCommandPool;
 		std::uint32_t const m_FramesInFlight;
 		std::vector<VkCommandBuffer> const m_vCommandBuffers;
@@ -55,5 +57,6 @@ namespace vul
 		std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> const m_vpRenderFinishedSemaphores;
 		std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> const m_vpInFlightFences;
 		uint32_t m_CurrentFrame;
+		bool m_FramebufferResized;
 	};
 }

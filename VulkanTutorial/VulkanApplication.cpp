@@ -29,8 +29,11 @@ vul::VulkanApplication::VulkanApplication() :
 	m_vpImageAvailableSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_vpRenderFinishedSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_vpInFlightFences{ createFences(m_pLogicalDevice.get(), m_FramesInFlight) },
-	m_CurrentFrame{}
+	m_CurrentFrame{},
+	m_FramebufferResized{}
 {
+	glfwSetWindowUserPointer(m_pWindow.get(), this);
+	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
 }
 
 vul::VulkanApplication::~VulkanApplication()
@@ -57,10 +60,18 @@ void vul::VulkanApplication::render()
 {
 	VkFence aFences[]{ m_vpInFlightFences[m_CurrentFrame].get()};
 	vkWaitForFences(m_pLogicalDevice.get(), 1, aFences, VK_TRUE, UINT64_MAX);
-	vkResetFences(m_pLogicalDevice.get(), 1, aFences);
 
 	std::uint32_t imageIndex;
-	vkAcquireNextImageKHR(m_pLogicalDevice.get(), m_pSwapChain.get(), UINT64_MAX, m_vpImageAvailableSemaphores[m_CurrentFrame].get(), VK_NULL_HANDLE, &imageIndex);
+	VkResult result{ vkAcquireNextImageKHR(m_pLogicalDevice.get(), m_pSwapChain.get(), UINT64_MAX, m_vpImageAvailableSemaphores[m_CurrentFrame].get(), VK_NULL_HANDLE, &imageIndex) };
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		recreateSwapChain();
+		m_FramebufferResized = true;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) 
+		throw std::runtime_error("vkAcquireNextImageKHR() failed!");
+
+	vkResetFences(m_pLogicalDevice.get(), 1, aFences);
 
 	vkResetCommandBuffer(m_vCommandBuffers[m_CurrentFrame], 0);
 
@@ -95,8 +106,50 @@ void vul::VulkanApplication::render()
 		.pImageIndices{ &imageIndex },
 	};
 
-	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+	result = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized) 
+	{
+		m_FramebufferResized = false;
+		recreateSwapChain();
+	}
+	else if (result != VK_SUCCESS)
+		throw std::runtime_error("failed to present swap chain image!");
 
 	m_CurrentFrame = (m_CurrentFrame + 1) % m_FramesInFlight;
+}
+
+void vul::VulkanApplication::recreateSwapChain()
+{
+	int width{};
+	int height{};
+
+	glfwGetFramebufferSize(m_pWindow.get(), &width, &height);
+	while (width == 0 || height == 0) 
+	{
+		glfwGetFramebufferSize(m_pWindow.get(), &width, &height);
+		glfwWaitEvents();
+	}
+
+	vkDeviceWaitIdle(m_pLogicalDevice.get());
+
+	m_vpSwapChainFrameBuffers.clear();
+	m_vpSwapChainImageViews.clear();
+	m_vSwapChainImages.clear();
+	m_pSwapChain.reset();
+
+	m_pSwapChain =
+	{
+		createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), 
+		std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr)
+	};
+	m_vSwapChainImages = getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get());
+	m_vpSwapChainImageViews = createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get());
+	m_vpSwapChainFrameBuffers = createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get());
+}
+
+void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)
+{
+	VulkanApplication* pApp{ reinterpret_cast<VulkanApplication*>(glfwGetWindowUserPointer(window)) };
+	pApp->m_FramebufferResized = true;
 }
 #pragma endregion PublicMethods
