@@ -24,10 +24,12 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vpSwapChainFrameBuffers{ createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get()) },
 	m_pCommandPool{ createCommandPool(m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get()), std::bind(vkDestroyCommandPool, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_CommandBuffer{ createCommandBuffer(m_pCommandPool.get(), m_pLogicalDevice.get()) },
-	m_pImageAvailableSemaphore{ createSemaphore(m_pLogicalDevice.get()), std::bind(vkDestroySemaphore, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_pRenderFinishedSemaphore{ createSemaphore(m_pLogicalDevice.get()), std::bind(vkDestroySemaphore, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_pInFlightFence{ createFence(m_pLogicalDevice.get()), std::bind(vkDestroyFence, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) }
+	m_FramesInFlight{ 2 },
+	m_vCommandBuffers{ createCommandBuffers(m_pCommandPool.get(), m_pLogicalDevice.get(), m_FramesInFlight) },
+	m_vpImageAvailableSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
+	m_vpRenderFinishedSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
+	m_vpInFlightFences{ createFences(m_pLogicalDevice.get(), m_FramesInFlight) },
+	m_CurrentFrame{}
 {
 }
 
@@ -51,21 +53,21 @@ void vul::VulkanApplication::run()
 	vkDeviceWaitIdle(m_pLogicalDevice.get());
 }
 
-void vul::VulkanApplication::render() const
+void vul::VulkanApplication::render()
 {
-	VkFence aFences[]{ m_pInFlightFence.get() };
+	VkFence aFences[]{ m_vpInFlightFences[m_CurrentFrame].get()};
 	vkWaitForFences(m_pLogicalDevice.get(), 1, aFences, VK_TRUE, UINT64_MAX);
 	vkResetFences(m_pLogicalDevice.get(), 1, aFences);
 
 	std::uint32_t imageIndex;
-	vkAcquireNextImageKHR(m_pLogicalDevice.get(), m_pSwapChain.get(), UINT64_MAX, m_pImageAvailableSemaphore.get(), VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(m_pLogicalDevice.get(), m_pSwapChain.get(), UINT64_MAX, m_vpImageAvailableSemaphores[m_CurrentFrame].get(), VK_NULL_HANDLE, &imageIndex);
 
-	vkResetCommandBuffer(m_CommandBuffer, 0);
+	vkResetCommandBuffer(m_vCommandBuffers[m_CurrentFrame], 0);
 
-	recordCommandBuffer(m_CommandBuffer, imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get());
+	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get());
 
-	VkSemaphore const aWaitSemaphores[]{ m_pImageAvailableSemaphore.get() };
-	VkSemaphore const aSignalSemaphores[]{ m_pRenderFinishedSemaphore.get() };
+	VkSemaphore const aWaitSemaphores[]{ m_vpImageAvailableSemaphores[m_CurrentFrame].get() };
+	VkSemaphore const aSignalSemaphores[]{ m_vpRenderFinishedSemaphores[m_CurrentFrame].get() };
 	VkPipelineStageFlags const aWaitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo const submitInfo
 	{
@@ -74,12 +76,12 @@ void vul::VulkanApplication::render() const
 		.pWaitSemaphores{ aWaitSemaphores },
 		.pWaitDstStageMask{ aWaitStages },
 		.commandBufferCount{ 1 },
-		.pCommandBuffers{ &m_CommandBuffer },
+		.pCommandBuffers{ &m_vCommandBuffers[m_CurrentFrame] },
 		.signalSemaphoreCount{ 1 },
 		.pSignalSemaphores{ aSignalSemaphores }
 	};
 
-	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_pInFlightFence.get()) != VK_SUCCESS)
+	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_vpInFlightFences[m_CurrentFrame].get()) != VK_SUCCESS)
 		throw std::runtime_error("vkQueueSubmit() failed!");
 
 	VkSwapchainKHR aSwapChains[]{ m_pSwapChain.get() };
@@ -94,5 +96,7 @@ void vul::VulkanApplication::render() const
 	};
 
 	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+
+	m_CurrentFrame = (m_CurrentFrame + 1) % m_FramesInFlight;
 }
 #pragma endregion PublicMethods

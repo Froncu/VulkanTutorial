@@ -73,16 +73,16 @@ namespace vul
 	[[nodiscard("handle to command pool ignored!")]]
 	VkCommandPool createCommandPool(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const surface, VkDevice const logicalDevice);
 
-	[[nodiscard("handle to command buffer ignored!")]]
-	VkCommandBuffer createCommandBuffer(VkCommandPool const commandPool, VkDevice const logicalDevice);
+	[[nodiscard("created command buffers ignored!")]]
+	std::vector<VkCommandBuffer> createCommandBuffers(VkCommandPool const commandPool, VkDevice const logicalDevice, std::uint32_t const framesInFlight);
 
 	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline);
 
-	[[nodiscard("handle to semaphore ignored!")]]
-	VkSemaphore createSemaphore(VkDevice const logicalDevice);
+	[[nodiscard("created semaphores ignored!")]]
+	std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> createSemaphores(VkDevice const logicalDevice, std::uint32_t const framesInFlight);
 
 	[[nodiscard("handle to semaphore ignored!")]]
-	VkFence createFence(VkDevice const logicalDevice);
+	std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> createFences(VkDevice const logicalDevice, std::uint32_t const framesInFlight);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();

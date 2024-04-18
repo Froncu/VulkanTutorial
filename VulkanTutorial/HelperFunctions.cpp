@@ -556,21 +556,21 @@ VkCommandPool vul::createCommandPool(VkPhysicalDevice const physicalDevice, VkSu
 	return commandPool;
 }
 
-VkCommandBuffer vul::createCommandBuffer(VkCommandPool const commandPool, VkDevice const logicalDevice)
+std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const commandPool, VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkCommandBufferAllocateInfo const allocateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO },
 		.commandPool{ commandPool },
 		.level{ VK_COMMAND_BUFFER_LEVEL_PRIMARY },
-		.commandBufferCount{ 1 }
+		.commandBufferCount{ framesInFlight }
 	};
 
-	VkCommandBuffer commandBuffer;
-	if (vkAllocateCommandBuffers(logicalDevice, &allocateInfo, &commandBuffer) != VK_SUCCESS)
+	std::vector<VkCommandBuffer> vCommandBuffers(framesInFlight);
+	if (vkAllocateCommandBuffers(logicalDevice, &allocateInfo, vCommandBuffers.data()) != VK_SUCCESS)
 		throw std::runtime_error("vkAllocateCommandBuffers() failed!");
 
-	return commandBuffer;
+	return vCommandBuffers;
 }
 
 void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline)
@@ -627,21 +627,27 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 		throw std::runtime_error("vkEndCommandBuffer() failed!");
 }
 
-VkSemaphore vul::createSemaphore(VkDevice const logicalDevice)
+std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> vul::createSemaphores(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkSemaphoreCreateInfo const semaphoreCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO }
 	};
 
-	VkSemaphore semaphore;
-	if (vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &semaphore) != VK_SUCCESS)
-		throw std::runtime_error("vkCreateSemaphore() failed!");
+	std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> vpSemaphores(framesInFlight);
+	for (std::uint32_t index{}; index < framesInFlight; ++index)
+	{
+		VkSemaphore semaphore;
+		if (vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &semaphore) != VK_SUCCESS)
+			throw std::runtime_error("vkCreateSemaphore() failed!");
 
-	return semaphore;
+		vpSemaphores[index] = { semaphore, std::bind(vkDestroySemaphore, logicalDevice, std::placeholders::_1, nullptr) };
+	}
+
+	return vpSemaphores;
 }
 
-VkFence vul::createFence(VkDevice const logicalDevice)
+std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vul::createFences(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkFenceCreateInfo const fenceCreateInfo
 	{
@@ -649,11 +655,17 @@ VkFence vul::createFence(VkDevice const logicalDevice)
 		.flags{ VK_FENCE_CREATE_SIGNALED_BIT }
 	};
 
-	VkFence inFlightFence;
-	if (vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &inFlightFence) != VK_SUCCESS)
-		throw std::runtime_error("vkCreateFence() failed!");
+	std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vpFences(framesInFlight);
+	for (std::uint32_t index{}; index < framesInFlight; ++index)
+	{
+		VkFence inFlightFence;
+		if (vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &inFlightFence) != VK_SUCCESS)
+			throw std::runtime_error("vkCreateFence() failed!");
 
-	return inFlightFence;
+		vpFences[index] = { inFlightFence, std::bind(vkDestroyFence, logicalDevice, std::placeholders::_1, nullptr) };
+	}
+
+	return vpFences;
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()

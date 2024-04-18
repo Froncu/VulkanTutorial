@@ -30,7 +30,7 @@ namespace vul
 		void run();
 
 	private:
-		void render() const;
+		void render();
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
 		std::unique_ptr<VkInstance_T, std::function<void(VkInstance_T*)>> const m_pInstance;
@@ -49,9 +49,11 @@ namespace vul
 		std::unique_ptr<VkPipeline_T, std::function<void(VkPipeline_T*)>> const m_pPipeline;
 		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const m_vpSwapChainFrameBuffers;
 		std::unique_ptr<VkCommandPool_T, std::function<void(VkCommandPool_T*)>> const m_pCommandPool;
-		VkCommandBuffer const m_CommandBuffer;
-		std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>> const m_pImageAvailableSemaphore;
-		std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>> const m_pRenderFinishedSemaphore;
-		std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>> const m_pInFlightFence;
+		std::uint32_t const m_FramesInFlight;
+		std::vector<VkCommandBuffer> const m_vCommandBuffers;
+		std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> const m_vpImageAvailableSemaphores;
+		std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> const m_vpRenderFinishedSemaphores;
+		std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> const m_vpInFlightFences;
+		uint32_t m_CurrentFrame;
 	};
 }
