@@ -336,13 +336,23 @@ VkRenderPass vul::createRenderPass(VkFormat const swapChainImageFormat, VkDevice
 		.pColorAttachments{ &colorAttachmentReference }
 	};
 
+	VkSubpassDependency const subpassDependency
+	{
+		.srcSubpass{ VK_SUBPASS_EXTERNAL },
+		.srcStageMask{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+		.dstStageMask{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+		.dstAccessMask{ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT }
+	};
+
 	VkRenderPassCreateInfo const renderPassCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO },
 		.attachmentCount{ 1 },
 		.pAttachments{ &colorAttachmentDescription },
 		.subpassCount{ 1 },
-		.pSubpasses{ &subpassDescription }
+		.pSubpasses{ &subpassDescription },
+		.dependencyCount{ 1 },
+		.pDependencies{ &subpassDependency }
 	};
 
 	VkRenderPass renderPass;
@@ -563,7 +573,7 @@ VkCommandBuffer vul::createCommandBuffer(VkCommandPool const commandPool, VkDevi
 	return commandBuffer;
 }
 
-void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<VkFramebuffer> const& vSwapChainFramebuffers, VkExtent2D const swapChainExtent)
+void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline)
 {
 	VkCommandBufferBeginInfo const commandBufferBeginInfo
 	{
@@ -573,12 +583,16 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	if (vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo) != VK_SUCCESS)
 		throw std::runtime_error("vkBeginCommandBuffer() failed!");
 
+	std::vector<VkFramebuffer> vSwapChainFrambuffers(vpSwapChainFramebuffers.size());
+	for (size_t index{}; index < vpSwapChainFramebuffers.size(); ++index)
+		vSwapChainFrambuffers[index] = vpSwapChainFramebuffers[index].get();
+
 	VkClearValue const clearColor{ .color{ 0.0f, 0.0f, 0.0f, 1.0f } };
 	VkRenderPassBeginInfo const renderPassBeginInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO },
 		.renderPass{ renderPass },
-		.framebuffer{ vSwapChainFramebuffers[imageIndex] },
+		.framebuffer{ vSwapChainFrambuffers[imageIndex] },
 		.renderArea
 		{
 			.extent{ swapChainExtent }
@@ -597,6 +611,8 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	};
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
 	VkRect2D const scissor
 	{
 		.extent{ swapChainExtent }
@@ -609,6 +625,35 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 		throw std::runtime_error("vkEndCommandBuffer() failed!");
+}
+
+VkSemaphore vul::createSemaphore(VkDevice const logicalDevice)
+{
+	VkSemaphoreCreateInfo const semaphoreCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO }
+	};
+
+	VkSemaphore semaphore;
+	if (vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &semaphore) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateSemaphore() failed!");
+
+	return semaphore;
+}
+
+VkFence vul::createFence(VkDevice const logicalDevice)
+{
+	VkFenceCreateInfo const fenceCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO },
+		.flags{ VK_FENCE_CREATE_SIGNALED_BIT }
+	};
+
+	VkFence inFlightFence;
+	if (vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &inFlightFence) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateFence() failed!");
+
+	return inFlightFence;
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()

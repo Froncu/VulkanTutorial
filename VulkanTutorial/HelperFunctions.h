@@ -76,7 +76,13 @@ namespace vul
 	[[nodiscard("handle to command buffer ignored!")]]
 	VkCommandBuffer createCommandBuffer(VkCommandPool const commandPool, VkDevice const logicalDevice);
 
-	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<VkFramebuffer> const& vSwapChainFramebuffers, VkExtent2D const swapChainExtent);
+	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline);
+
+	[[nodiscard("handle to semaphore ignored!")]]
+	VkSemaphore createSemaphore(VkDevice const logicalDevice);
+
+	[[nodiscard("handle to semaphore ignored!")]]
+	VkFence createFence(VkDevice const logicalDevice);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();

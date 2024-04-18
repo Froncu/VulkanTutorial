@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #undef GLFW_INCLUDE_VULKAN
+#include <stdexcept>
 
 #pragma region Constructors/Destructor
 vul::VulkanApplication::VulkanApplication() :
@@ -23,7 +24,10 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vpSwapChainFrameBuffers{ createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get()) },
 	m_pCommandPool{ createCommandPool(m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get()), std::bind(vkDestroyCommandPool, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_CommandBuffer{ createCommandBuffer(m_pCommandPool.get(), m_pLogicalDevice.get()) }
+	m_CommandBuffer{ createCommandBuffer(m_pCommandPool.get(), m_pLogicalDevice.get()) },
+	m_pImageAvailableSemaphore{ createSemaphore(m_pLogicalDevice.get()), std::bind(vkDestroySemaphore, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pRenderFinishedSemaphore{ createSemaphore(m_pLogicalDevice.get()), std::bind(vkDestroySemaphore, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pInFlightFence{ createFence(m_pLogicalDevice.get()), std::bind(vkDestroyFence, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) }
 {
 }
 
@@ -39,6 +43,56 @@ vul::VulkanApplication::~VulkanApplication()
 void vul::VulkanApplication::run()
 {
 	while (!glfwWindowShouldClose(m_pWindow.get()))
+	{
 		glfwPollEvents();
+		render();
+	}
+
+	vkDeviceWaitIdle(m_pLogicalDevice.get());
+}
+
+void vul::VulkanApplication::render() const
+{
+	VkFence aFences[]{ m_pInFlightFence.get() };
+	vkWaitForFences(m_pLogicalDevice.get(), 1, aFences, VK_TRUE, UINT64_MAX);
+	vkResetFences(m_pLogicalDevice.get(), 1, aFences);
+
+	std::uint32_t imageIndex;
+	vkAcquireNextImageKHR(m_pLogicalDevice.get(), m_pSwapChain.get(), UINT64_MAX, m_pImageAvailableSemaphore.get(), VK_NULL_HANDLE, &imageIndex);
+
+	vkResetCommandBuffer(m_CommandBuffer, 0);
+
+	recordCommandBuffer(m_CommandBuffer, imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get());
+
+	VkSemaphore const aWaitSemaphores[]{ m_pImageAvailableSemaphore.get() };
+	VkSemaphore const aSignalSemaphores[]{ m_pRenderFinishedSemaphore.get() };
+	VkPipelineStageFlags const aWaitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkSubmitInfo const submitInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_SUBMIT_INFO },
+		.waitSemaphoreCount{ 1 },
+		.pWaitSemaphores{ aWaitSemaphores },
+		.pWaitDstStageMask{ aWaitStages },
+		.commandBufferCount{ 1 },
+		.pCommandBuffers{ &m_CommandBuffer },
+		.signalSemaphoreCount{ 1 },
+		.pSignalSemaphores{ aSignalSemaphores }
+	};
+
+	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_pInFlightFence.get()) != VK_SUCCESS)
+		throw std::runtime_error("vkQueueSubmit() failed!");
+
+	VkSwapchainKHR aSwapChains[]{ m_pSwapChain.get() };
+	VkPresentInfoKHR const presentInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR },
+		.waitSemaphoreCount{ 1 },
+		.pWaitSemaphores{ aSignalSemaphores },
+		.swapchainCount{ 1 },
+		.pSwapchains{ aSwapChains },
+		.pImageIndices{ &imageIndex },
+	};
+
+	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
 }
 #pragma endregion PublicMethods
