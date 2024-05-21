@@ -36,6 +36,8 @@ namespace vul
 		void recreateSwapChain();
 		std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
 		createVertexBuffer();
+		std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+		createIndexBuffer();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
@@ -62,9 +64,13 @@ namespace vul
 		std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> const m_vpInFlightFences;
 		uint32_t m_CurrentFrame;
 		bool m_FramebufferResized;
-		std::vector<Vertex> m_vVertices;
+		std::vector<Vertex> const m_vVertices;
+		std::vector<std::uint16_t> const m_vIndices;
 		std::pair<
 			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
 			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> m_pVertexBuffer;
+		std::pair<
+			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> m_pIndexBuffer;
 	};
 }

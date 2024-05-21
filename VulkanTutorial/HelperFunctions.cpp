@@ -580,7 +580,7 @@ std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const comma
 	return vCommandBuffers;
 }
 
-void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, std::vector<Vertex> const& vVertices)
+void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices)
 {
 	VkCommandBufferBeginInfo const commandBufferBeginInfo
 	{
@@ -623,13 +623,15 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	VkDeviceSize offsets[]{ 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, aVertexBuffers, offsets);
 
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
 	VkRect2D const scissor
 	{
 		.extent{ swapChainExtent }
 	};
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, static_cast<std::uint32_t>(vVertices.size()), 1, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(vIndices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 

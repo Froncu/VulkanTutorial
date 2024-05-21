@@ -33,11 +33,14 @@ vul::VulkanApplication::VulkanApplication() :
 	m_FramebufferResized{},
 	m_vVertices
 	{
-		{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+		{ { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ { 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+		{ { -0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f } }
 	},
-	m_pVertexBuffer{ createVertexBuffer() }
+	m_vIndices{ 0, 1, 2, 2, 3, 0 },
+	m_pVertexBuffer{ createVertexBuffer() },
+	m_pIndexBuffer{ createIndexBuffer() }
 {
 	glfwSetWindowUserPointer(m_pWindow.get(), this);
 	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
@@ -82,7 +85,7 @@ void vul::VulkanApplication::render()
 
 	vkResetCommandBuffer(m_vCommandBuffers[m_CurrentFrame], 0);
 
-	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get(), m_pVertexBuffer.first.get(), m_vVertices);
+	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get(), m_pVertexBuffer.first.get(), m_pIndexBuffer.first.get(), m_vIndices);
 
 	VkSemaphore const aWaitSemaphores[]{ m_vpImageAvailableSemaphores[m_CurrentFrame].get() };
 	VkSemaphore const aSignalSemaphores[]{ m_vpRenderFinishedSemaphores[m_CurrentFrame].get() };
@@ -181,6 +184,33 @@ vul::VulkanApplication::createVertexBuffer()
 	copyBuffer(pStagingBuffer.first.get(), pVertexBuffer.first.get(), bufferSize, m_pCommandPool.get(), m_pLogicalDevice.get(), m_GraphicsQueue);
 
 	return pVertexBuffer;
+}
+
+std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+vul::VulkanApplication::createIndexBuffer()
+{
+	VkDeviceSize const bufferSize{ sizeof(m_vIndices[0]) * m_vIndices.size() };
+
+	auto pStagingBuffer
+	{
+		createBuffer(m_pLogicalDevice.get(), m_PhysicalDevice, bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	};
+
+	void* data;
+	vkMapMemory(m_pLogicalDevice.get(), pStagingBuffer.second.get(), 0, bufferSize, 0, &data);
+	memcpy(data, m_vIndices.data(), static_cast<size_t>(bufferSize));
+	vkUnmapMemory(m_pLogicalDevice.get(), pStagingBuffer.second.get());
+
+	auto pIndexBuffer
+	{
+		createBuffer(m_pLogicalDevice.get(), m_PhysicalDevice, bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	};
+
+	copyBuffer(pStagingBuffer.first.get(), pIndexBuffer.first.get(), bufferSize, m_pCommandPool.get(), m_pLogicalDevice.get(), m_GraphicsQueue);
+
+	return pIndexBuffer;
 }
 
 void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)
