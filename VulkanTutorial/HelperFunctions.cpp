@@ -679,13 +679,13 @@ std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vul::cr
 }
 
 std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-vul::createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice)
+vul::createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, VkDeviceSize const size, VkBufferUsageFlags const usageFlags, VkMemoryPropertyFlags const properties)
 {
 	VkBufferCreateInfo const bufferCreateInfo
 	{
 		.sType{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO },
-		.size{ sizeof(vVertices[0]) * vVertices.size() },
-		.usage{ VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+		.size{ size },
+		.usage{ usageFlags },
 		.sharingMode{ VK_SHARING_MODE_EXCLUSIVE }
 	};
 
@@ -700,7 +700,7 @@ vul::createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const log
 	{
 		.sType{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO },
 		.allocationSize{ memoryRequirements.size },
-		.memoryTypeIndex{ getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, physicalDevice) }
+		.memoryTypeIndex{ getMemoryType(memoryRequirements.memoryTypeBits, properties, physicalDevice) }
 	};
 
 	VkDeviceMemory vertexBufferMemory;
@@ -709,11 +709,6 @@ vul::createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const log
 
 	vkBindBufferMemory(logicalDevice, vertexBuffer, vertexBufferMemory, 0);
 
-	void* data;
-	vkMapMemory(logicalDevice, vertexBufferMemory, 0, bufferCreateInfo.size, 0, &data);
-	memcpy(data, vVertices.data(), static_cast<std::size_t>(bufferCreateInfo.size));
-	vkUnmapMemory(logicalDevice, vertexBufferMemory);
-
 	return
 	{
 		std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>(vertexBuffer,
@@ -721,6 +716,47 @@ vul::createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const log
 		std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>(vertexBufferMemory,
 			std::bind(vkFreeMemory, logicalDevice, std::placeholders::_1, nullptr))
 	};
+}
+
+void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue)
+{
+	VkCommandBufferAllocateInfo const allocationInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO },
+		.commandPool{ commandPool },
+		.level{ VK_COMMAND_BUFFER_LEVEL_PRIMARY },
+		.commandBufferCount{ 1 }
+	};
+	
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(logicalDevice, &allocationInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo const beginInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO },
+		.flags{ VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT }
+	};
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy const copyRegion
+	{
+		.size{ size }
+	};
+	vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo const submitInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_SUBMIT_INFO },
+		.commandBufferCount{ 1 },
+		.pCommandBuffers{ &commandBuffer }
+	};
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+
+	vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()

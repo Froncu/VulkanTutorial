@@ -37,7 +37,7 @@ vul::VulkanApplication::VulkanApplication() :
 		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
 		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
 	},
-	m_pVertexBuffer{ createVertexBuffer(m_vVertices, m_pLogicalDevice.get(), m_PhysicalDevice) }
+	m_pVertexBuffer{ createVertexBuffer() }
 {
 	glfwSetWindowUserPointer(m_pWindow.get(), this);
 	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
@@ -152,6 +152,35 @@ void vul::VulkanApplication::recreateSwapChain()
 	m_vSwapChainImages = getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get());
 	m_vpSwapChainImageViews = createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get());
 	m_vpSwapChainFrameBuffers = createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get());
+}
+
+std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+vul::VulkanApplication::createVertexBuffer()
+{
+	VkDeviceSize const bufferSize{ sizeof(m_vVertices[0]) * m_vVertices.size() };
+
+	auto pStagingBuffer
+	{
+		createBuffer(m_pLogicalDevice.get(), m_PhysicalDevice,
+		bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	};
+
+	void* data;
+	vkMapMemory(m_pLogicalDevice.get(), pStagingBuffer.second.get(), 0, bufferSize, 0, &data);
+	memcpy(data, m_vVertices.data(), static_cast<std::size_t>(bufferSize));
+	vkUnmapMemory(m_pLogicalDevice.get(), pStagingBuffer.second.get());
+
+	auto pVertexBuffer
+	{
+		createBuffer(m_pLogicalDevice.get(), m_PhysicalDevice,
+		bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	};
+
+	copyBuffer(pStagingBuffer.first.get(), pVertexBuffer.first.get(), bufferSize, m_pCommandPool.get(), m_pLogicalDevice.get(), m_GraphicsQueue);
+
+	return pVertexBuffer;
 }
 
 void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)

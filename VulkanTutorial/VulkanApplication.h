@@ -34,6 +34,8 @@ namespace vul
 	private:
 		void render();
 		void recreateSwapChain();
+		std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+		createVertexBuffer();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
@@ -63,6 +65,6 @@ namespace vul
 		std::vector<Vertex> m_vVertices;
 		std::pair<
 			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
-			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> const m_pVertexBuffer;
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> m_pVertexBuffer;
 	};
 }

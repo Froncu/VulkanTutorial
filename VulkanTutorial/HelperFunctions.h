@@ -62,9 +62,11 @@ namespace vul
 	[[nodiscard("handle to semaphore ignored!")]]
 	std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> createFences(VkDevice const logicalDevice, std::uint32_t const framesInFlight);
 
-	[[nodiscard("handle to vertex buffer ignored!")]]
+	[[nodiscard("handle to buffer ignored!")]]
 	std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-		createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice);
+		createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, VkDeviceSize const size, VkBufferUsageFlags const usageFlags, VkMemoryPropertyFlags const properties);
+
+	void copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
