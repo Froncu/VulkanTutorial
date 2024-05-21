@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Vulkan/vulkan_core.h>
-#include <optional>
-#include <vector>
+#include "HelperStructs.h"
 #include <memory>
 #include <functional>
 #include <xstring>
@@ -11,26 +9,6 @@ struct GLFWwindow;
 
 namespace vul
 {
-	struct QueueFamilyIndices final
-	{
-		std::optional<std::uint32_t> graphics{};
-		std::optional<std::uint32_t> present{};
-
-		bool isComplete() const
-		{
-			return 
-				graphics.has_value() and
-				present.has_value();
-		}
-	};
-
-	struct SwapChainSupportDetails final
-	{
-		VkSurfaceCapabilitiesKHR capabilities{};
-		std::vector<VkSurfaceFormatKHR> vFormats{};
-		std::vector<VkPresentModeKHR> vPresentModes{};
-	};
-
 	[[nodiscard("handle to created window ignored!")]]
 	GLFWwindow* createWindow(int const width, int const height, std::string_view const title);
 

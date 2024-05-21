@@ -100,12 +100,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="HelperFunctions.cpp" />
+    <ClCompile Include="HelperStructs.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
     <ClCompile Include="VulkanApplication.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HelperFunctions.h" />
+    <ClInclude Include="HelperStructs.h" />
     <ClInclude Include="ShaderCompiler.h" />
     <ClInclude Include="VulkanApplication.h" />
   </ItemGroup>

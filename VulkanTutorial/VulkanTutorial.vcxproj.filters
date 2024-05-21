@@ -11,6 +11,9 @@
     <ClCompile Include="ShaderCompiler.cpp">
       <Filter>ShaderCompiler</Filter>
     </ClCompile>
+    <ClCompile Include="HelperStructs.cpp">
+      <Filter>HelperStructs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HelperFunctions.h">
@@ -22,6 +25,9 @@
     <ClInclude Include="ShaderCompiler.h">
       <Filter>ShaderCompiler</Filter>
     </ClInclude>
+    <ClInclude Include="HelperStructs.h">
+      <Filter>HelperStructs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="HelperFunctions">
@@ -32,6 +38,9 @@
     </Filter>
     <Filter Include="ShaderCompiler">
       <UniqueIdentifier>{5d14c2fe-be5f-4c57-b0f9-6c417716df39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HelperStructs">
+      <UniqueIdentifier>{9c797d5f-65bb-4233-a0bf-4441fa6f4994}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
