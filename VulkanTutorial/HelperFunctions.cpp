@@ -422,9 +422,16 @@ VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const sw
 		.pDynamicStates{ vDynamicStates.data() }
 	};
 
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
 	VkPipelineVertexInputStateCreateInfo const vertexInputStateCreateInfo
 	{
-		.sType{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO }
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO },
+		.vertexBindingDescriptionCount{ 1 },
+		.pVertexBindingDescriptions{ &bindingDescription },
+		.vertexAttributeDescriptionCount{ static_cast<uint32_t>(attributeDescriptions.size()) },
+		.pVertexAttributeDescriptions{ attributeDescriptions.data() }
 	};
 
 	VkPipelineInputAssemblyStateCreateInfo const inputAssemblyStateCreateInfo
@@ -573,7 +580,7 @@ std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const comma
 	return vCommandBuffers;
 }
 
-void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline)
+void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, std::vector<Vertex> const& vVertices)
 {
 	VkCommandBufferBeginInfo const commandBufferBeginInfo
 	{
@@ -612,6 +619,9 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	VkBuffer aVertexBuffers[]{ vertexBuffer };
+	VkDeviceSize offsets[]{ 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, aVertexBuffers, offsets);
 
 	VkRect2D const scissor
 	{
@@ -619,7 +629,7 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	};
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	vkCmdDraw(commandBuffer, static_cast<std::uint32_t>(vVertices.size()), 1, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -666,6 +676,51 @@ std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vul::cr
 	}
 
 	return vpFences;
+}
+
+std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+vul::createVertexBuffer(std::vector<Vertex> const& vVertices, VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice)
+{
+	VkBufferCreateInfo const bufferCreateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO },
+		.size{ sizeof(vVertices[0]) * vVertices.size() },
+		.usage{ VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+		.sharingMode{ VK_SHARING_MODE_EXCLUSIVE }
+	};
+
+	VkBuffer vertexBuffer;
+	if (vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &vertexBuffer) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateBuffer() failed!");
+
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(logicalDevice, vertexBuffer, &memoryRequirements);
+
+	VkMemoryAllocateInfo const allocateInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO },
+		.allocationSize{ memoryRequirements.size },
+		.memoryTypeIndex{ getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, physicalDevice) }
+	};
+
+	VkDeviceMemory vertexBufferMemory;
+	if (vkAllocateMemory(logicalDevice, &allocateInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS)
+		throw std::runtime_error("failed to allocate vertex buffer memory!");
+
+	vkBindBufferMemory(logicalDevice, vertexBuffer, vertexBufferMemory, 0);
+
+	void* data;
+	vkMapMemory(logicalDevice, vertexBufferMemory, 0, bufferCreateInfo.size, 0, &data);
+	memcpy(data, vVertices.data(), static_cast<std::size_t>(bufferCreateInfo.size));
+	vkUnmapMemory(logicalDevice, vertexBufferMemory);
+
+	return
+	{
+		std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>(vertexBuffer,
+			std::bind(vkDestroyBuffer, logicalDevice, std::placeholders::_1, nullptr)),
+		std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>(vertexBufferMemory,
+			std::bind(vkFreeMemory, logicalDevice, std::placeholders::_1, nullptr))
+	};
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
@@ -787,6 +842,19 @@ vul::SwapChainSupportDetails vul::getSwapChainSupportDetails(VkPhysicalDevice co
 	};
 
 	return swapChainSupportDetails;
+}
+
+std::uint32_t vul::getMemoryType(std::uint32_t const typeFilter, VkMemoryPropertyFlags const memoryProperties, VkPhysicalDevice const physicalDevice)
+{
+	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
+
+	for (std::uint32_t i{}; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+		if ((typeFilter & (1 << i)) &&
+			(physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryProperties) == memoryProperties)
+			return i;
+
+	throw std::runtime_error("failed to find suitable memory type!");
 }
 
 bool vul::isInstanceExtensionAvailable(std::string_view const instanceExtensionName)

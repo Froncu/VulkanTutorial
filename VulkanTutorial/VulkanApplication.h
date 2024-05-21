@@ -1,5 +1,7 @@
 #pragma once
 
+#include "HelperStructs.h"
+
 #include <Vulkan/vulkan_core.h>
 #include <memory>
 #include <functional>
@@ -58,5 +60,9 @@ namespace vul
 		std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> const m_vpInFlightFences;
 		uint32_t m_CurrentFrame;
 		bool m_FramebufferResized;
+		std::vector<Vertex> m_vVertices;
+		std::pair<
+			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> const m_pVertexBuffer;
 	};
 }

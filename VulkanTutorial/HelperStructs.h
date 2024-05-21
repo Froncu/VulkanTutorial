@@ -1,8 +1,10 @@
 #pragma once
 
 #include <Vulkan/vulkan_core.h>
+#include <glm/glm.hpp>
 #include <optional>
 #include <vector>
+#include <array>
 
 namespace vul
 {
@@ -19,5 +21,14 @@ namespace vul
 		VkSurfaceCapabilitiesKHR capabilities{};
 		std::vector<VkSurfaceFormatKHR> vFormats{};
 		std::vector<VkPresentModeKHR> vPresentModes{};
+	};
+
+	struct Vertex final
+	{
+		static VkVertexInputBindingDescription getBindingDescription();
+		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+
+		glm::vec2 position;
+		glm::vec3 color;
 	};
 }

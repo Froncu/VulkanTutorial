@@ -30,7 +30,14 @@ vul::VulkanApplication::VulkanApplication() :
 	m_vpRenderFinishedSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_vpInFlightFences{ createFences(m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_CurrentFrame{},
-	m_FramebufferResized{}
+	m_FramebufferResized{},
+	m_vVertices
+	{
+		{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+	},
+	m_pVertexBuffer{ createVertexBuffer(m_vVertices, m_pLogicalDevice.get(), m_PhysicalDevice) }
 {
 	glfwSetWindowUserPointer(m_pWindow.get(), this);
 	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
@@ -75,7 +82,7 @@ void vul::VulkanApplication::render()
 
 	vkResetCommandBuffer(m_vCommandBuffers[m_CurrentFrame], 0);
 
-	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get());
+	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get(), m_pVertexBuffer.first.get(), m_vVertices);
 
 	VkSemaphore const aWaitSemaphores[]{ m_vpImageAvailableSemaphores[m_CurrentFrame].get() };
 	VkSemaphore const aSignalSemaphores[]{ m_vpRenderFinishedSemaphores[m_CurrentFrame].get() };
