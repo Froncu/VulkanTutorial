@@ -5,7 +5,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #undef GLFW_INCLUDE_VULKAN
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
 #include <stdexcept>
+#include <chrono>
 
 #pragma region Constructors/Destructor
 vul::VulkanApplication::VulkanApplication() :
@@ -19,12 +22,14 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pSwapChain{ createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vSwapChainImages{ getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get()) },
 	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get()) },
-	m_pPipelineLayout{ createPipelineLayout(m_pLogicalDevice.get()), std::bind(vkDestroyPipelineLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pDescriptorSetLayout{ createDescriptorSetLayout(m_pLogicalDevice.get()), std::bind(vkDestroyDescriptorSetLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_FramesInFlight{ 2 },
+	m_pDescriptorPool{ createDescriptorPool(m_FramesInFlight, m_pLogicalDevice.get()), std::bind(vkDestroyDescriptorPool, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pPipelineLayout{ createPipelineLayout(m_pLogicalDevice.get(), m_pDescriptorSetLayout.get()), std::bind(vkDestroyPipelineLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_pRenderPass{ createRenderPass(m_SwapChainImageFormat, m_pLogicalDevice.get()), std::bind(vkDestroyRenderPass, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_pPipeline{ createPipeline(m_pLogicalDevice.get(), m_SwapChainImageExtent, m_pPipelineLayout.get(), m_pRenderPass.get()), std::bind(vkDestroyPipeline, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vpSwapChainFrameBuffers{ createFramebuffers(m_vpSwapChainImageViews, m_pRenderPass.get(), m_SwapChainImageExtent, m_pLogicalDevice.get()) },
 	m_pCommandPool{ createCommandPool(m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get()), std::bind(vkDestroyCommandPool, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
-	m_FramesInFlight{ 2 },
 	m_vCommandBuffers{ createCommandBuffers(m_pCommandPool.get(), m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_vpImageAvailableSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
 	m_vpRenderFinishedSemaphores{ createSemaphores(m_pLogicalDevice.get(), m_FramesInFlight) },
@@ -44,6 +49,9 @@ vul::VulkanApplication::VulkanApplication() :
 {
 	glfwSetWindowUserPointer(m_pWindow.get(), this);
 	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
+
+	createUniformBuffers();
+	createDescriptorSets();
 }
 
 vul::VulkanApplication::~VulkanApplication()
@@ -85,7 +93,9 @@ void vul::VulkanApplication::render()
 
 	vkResetCommandBuffer(m_vCommandBuffers[m_CurrentFrame], 0);
 
-	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get(), m_pVertexBuffer.first.get(), m_pIndexBuffer.first.get(), m_vIndices);
+	updateUniformBuffer();
+
+	recordCommandBuffer(m_vCommandBuffers[m_CurrentFrame], imageIndex, m_pRenderPass.get(), m_vpSwapChainFrameBuffers, m_SwapChainImageExtent, m_pPipeline.get(), m_pVertexBuffer.first.get(), m_pIndexBuffer.first.get(), m_vIndices, m_pPipelineLayout.get(), m_vDescriptorSets, m_CurrentFrame);
 
 	VkSemaphore const aWaitSemaphores[]{ m_vpImageAvailableSemaphores[m_CurrentFrame].get() };
 	VkSemaphore const aSignalSemaphores[]{ m_vpRenderFinishedSemaphores[m_CurrentFrame].get() };
@@ -211,6 +221,79 @@ vul::VulkanApplication::createIndexBuffer()
 	copyBuffer(pStagingBuffer.first.get(), pIndexBuffer.first.get(), bufferSize, m_pCommandPool.get(), m_pLogicalDevice.get(), m_GraphicsQueue);
 
 	return pIndexBuffer;
+}
+
+void vul::VulkanApplication::createUniformBuffers()
+{
+	VkDeviceSize const bufferSize{ sizeof(UniformBufferObject) };
+
+	m_vpUniformBuffers.resize(m_FramesInFlight);
+	m_vUniformBuffersMapped.resize(m_FramesInFlight);
+
+	for (std::size_t index{}; index < m_FramesInFlight; ++index)
+	{
+		m_vpUniformBuffers[index] = createBuffer(m_pLogicalDevice.get(), m_PhysicalDevice,
+			bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		vkMapMemory(m_pLogicalDevice.get(), m_vpUniformBuffers[index].second.get(), 0, bufferSize, 0, &m_vUniformBuffersMapped[index]);
+	}
+}
+
+void vul::VulkanApplication::updateUniformBuffer()
+{
+	static auto startTime{ std::chrono::high_resolution_clock::now() };
+
+	auto currentTime{ std::chrono::high_resolution_clock::now() };
+	float deltaSeconds{ std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count() };
+
+	UniformBufferObject uniformBufferObject
+	{
+		.modelMatrix{ glm::rotate(glm::mat4(1.0f), deltaSeconds * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)) },
+		.viewMatrix{ glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) },
+		.projectionMatrix{ glm::perspective(glm::radians(45.0f), m_SwapChainImageExtent.width / static_cast<float>(m_SwapChainImageExtent.height), 0.1f, 10.0f) }
+	};
+
+	uniformBufferObject.projectionMatrix[1][1] *= -1;
+
+	memcpy(m_vUniformBuffersMapped[m_CurrentFrame], &uniformBufferObject, sizeof(uniformBufferObject));
+}
+
+void vul::VulkanApplication::createDescriptorSets()
+{
+	std::vector<VkDescriptorSetLayout> vLayouts(m_FramesInFlight, m_pDescriptorSetLayout.get());
+	VkDescriptorSetAllocateInfo const allocationInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO  },
+		.descriptorPool{ m_pDescriptorPool.get() },
+		.descriptorSetCount{ m_FramesInFlight },
+		.pSetLayouts{ vLayouts.data() }
+	};
+
+	m_vDescriptorSets.resize(m_FramesInFlight);
+	if (vkAllocateDescriptorSets(m_pLogicalDevice.get(), &allocationInfo, m_vDescriptorSets.data()) != VK_SUCCESS)
+		throw std::runtime_error("vkAllocateDescriptorSets() failed!");
+
+	for (std::size_t index{}; index < m_FramesInFlight; ++index)
+	{
+		VkDescriptorBufferInfo const bufferInfo
+		{
+			.buffer{ m_vpUniformBuffers[index].first.get() },
+			.offset{ 0 },
+			.range{ sizeof(UniformBufferObject) }
+		};
+
+		VkWriteDescriptorSet const descriptorWrite
+		{
+			.sType{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET },
+			.dstSet{ m_vDescriptorSets[index] },
+			.descriptorCount{ 1 },
+			.descriptorType{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
+			.pBufferInfo{ &bufferInfo }
+		};
+
+		vkUpdateDescriptorSets(m_pLogicalDevice.get(), 1, &descriptorWrite, 0, nullptr);
+	}
 }
 
 void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)

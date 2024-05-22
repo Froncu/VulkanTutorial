@@ -38,6 +38,9 @@ namespace vul
 		createVertexBuffer();
 		std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
 		createIndexBuffer();
+		void createUniformBuffers();
+		void updateUniformBuffer();
+		void createDescriptorSets();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
@@ -52,12 +55,14 @@ namespace vul
 		VkExtent2D m_SwapChainImageExtent;
 		std::vector<VkImage> m_vSwapChainImages;
 		std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> m_vpSwapChainImageViews;
+		std::unique_ptr<VkDescriptorSetLayout_T, std::function<void(VkDescriptorSetLayout_T*)>> const m_pDescriptorSetLayout;
+		std::uint32_t const m_FramesInFlight;
+		std::unique_ptr<VkDescriptorPool_T, std::function<void(VkDescriptorPool_T*)>> m_pDescriptorPool;
 		std::unique_ptr<VkPipelineLayout_T, std::function<void(VkPipelineLayout_T*)>> const m_pPipelineLayout;
 		std::unique_ptr<VkRenderPass_T, std::function<void(VkRenderPass_T*)>> const m_pRenderPass;
 		std::unique_ptr<VkPipeline_T, std::function<void(VkPipeline_T*)>> const m_pPipeline;
 		std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> m_vpSwapChainFrameBuffers;
 		std::unique_ptr<VkCommandPool_T, std::function<void(VkCommandPool_T*)>> const m_pCommandPool;
-		std::uint32_t const m_FramesInFlight;
 		std::vector<VkCommandBuffer> const m_vCommandBuffers;
 		std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> const m_vpImageAvailableSemaphores;
 		std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> const m_vpRenderFinishedSemaphores;
@@ -72,5 +77,10 @@ namespace vul
 		std::pair<
 			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
 			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> m_pIndexBuffer;
+		std::vector<std::pair<
+			std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>,
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>> m_vpUniformBuffers;
+		std::vector<void*> m_vUniformBuffersMapped;
+		std::vector<VkDescriptorSet> m_vDescriptorSets;
 	};
 }

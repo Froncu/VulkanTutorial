@@ -362,11 +362,13 @@ VkRenderPass vul::createRenderPass(VkFormat const swapChainImageFormat, VkDevice
 	return renderPass;
 }
 
-VkPipelineLayout vul::createPipelineLayout(VkDevice const logicalDevice)
+VkPipelineLayout vul::createPipelineLayout(VkDevice const logicalDevice, VkDescriptorSetLayout const descriptorSetLayout)
 {
 	VkPipelineLayoutCreateInfo const pipelineLayoutCreateInfo
 	{
-		.sType{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO }
+		.sType{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO },
+		.setLayoutCount{ 1 },
+		.pSetLayouts{ &descriptorSetLayout }
 	};
 
 	VkPipelineLayout pipelineLayout;
@@ -467,7 +469,7 @@ VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const sw
 		.rasterizerDiscardEnable{ VK_FALSE },
 		.polygonMode{ VK_POLYGON_MODE_FILL },
 		.cullMode{ VK_CULL_MODE_BACK_BIT },
-		.frontFace{ VK_FRONT_FACE_CLOCKWISE },
+		.frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE },
 		.depthBiasEnable{ VK_FALSE },
 		.lineWidth{ 1.0f },
 	};
@@ -580,7 +582,7 @@ std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const comma
 	return vCommandBuffers;
 }
 
-void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices)
+void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices, VkPipelineLayout const pipelineLayout, std::vector<VkDescriptorSet> const& vDescriptorSets, std::uint32_t const currentFrame)
 {
 	VkCommandBufferBeginInfo const commandBufferBeginInfo
 	{
@@ -631,6 +633,7 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 	};
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &vDescriptorSets[currentFrame], 0, nullptr);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(vIndices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -729,7 +732,7 @@ void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuff
 		.level{ VK_COMMAND_BUFFER_LEVEL_PRIMARY },
 		.commandBufferCount{ 1 }
 	};
-	
+
 	VkCommandBuffer commandBuffer;
 	vkAllocateCommandBuffers(logicalDevice, &allocationInfo, &commandBuffer);
 
@@ -759,6 +762,52 @@ void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuff
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
+}
+
+VkDescriptorSetLayout vul::createDescriptorSetLayout(VkDevice const logicalDevice)
+{
+	VkDescriptorSetLayoutBinding const uboLayoutBinding
+	{
+		.descriptorType{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
+		.descriptorCount{ 1 },
+		.stageFlags{ VK_SHADER_STAGE_VERTEX_BIT }
+	};
+
+	VkDescriptorSetLayoutCreateInfo const layoutInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO },
+		.bindingCount{ 1 },
+		.pBindings{ &uboLayoutBinding }
+	};
+
+	VkDescriptorSetLayout descriptorSetLayout;
+	if (vkCreateDescriptorSetLayout(logicalDevice, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateDescriptorSetLayout() failed!");
+
+	return descriptorSetLayout;
+}
+
+VkDescriptorPool vul::createDescriptorPool(std::uint32_t const framesInFlight, VkDevice const logicalDevice)
+{
+	VkDescriptorPoolSize const poolSize
+	{
+		.type{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
+		.descriptorCount{ framesInFlight }
+	};
+
+	VkDescriptorPoolCreateInfo const poolInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO },
+		.maxSets{ framesInFlight },
+		.poolSizeCount{ 1 },
+		.pPoolSizes{ &poolSize }
+	};
+
+	VkDescriptorPool descriptorPool;
+	if (vkCreateDescriptorPool(logicalDevice, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateDescriptorPool() failed!");
+
+	return descriptorPool;
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()

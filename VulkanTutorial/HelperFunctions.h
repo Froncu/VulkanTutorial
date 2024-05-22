@@ -40,7 +40,7 @@ namespace vul
 	VkRenderPass createRenderPass(VkFormat const swapChainImageFormat, VkDevice const logicalDevice);
 
 	[[nodiscard("handle to pipeline layout ignored!")]]
-	VkPipelineLayout createPipelineLayout(VkDevice const logicalDevice);
+	VkPipelineLayout createPipelineLayout(VkDevice const logicalDevice, VkDescriptorSetLayout const descriptorSetLayout);
 
 	[[nodiscard("handle to pipeline ignored!")]]
 	VkPipeline createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass);
@@ -54,7 +54,7 @@ namespace vul
 	[[nodiscard("created command buffers ignored!")]]
 	std::vector<VkCommandBuffer> createCommandBuffers(VkCommandPool const commandPool, VkDevice const logicalDevice, std::uint32_t const framesInFlight);
 
-	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices);
+	void recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices, VkPipelineLayout const pipelineLayout, std::vector<VkDescriptorSet> const& vDescriptorSets, std::uint32_t const currentFrame);
 
 	[[nodiscard("created semaphores ignored!")]]
 	std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> createSemaphores(VkDevice const logicalDevice, std::uint32_t const framesInFlight);
@@ -67,6 +67,12 @@ namespace vul
 		createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, VkDeviceSize const size, VkBufferUsageFlags const usageFlags, VkMemoryPropertyFlags const properties);
 
 	void copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue);
+
+	[[nodiscard("created descriptor set layout ignored!")]]
+	VkDescriptorSetLayout createDescriptorSetLayout(VkDevice const logicalDevice);
+
+	[[nodiscard("created descriptor pool layout ignored!")]]
+	VkDescriptorPool createDescriptorPool(std::uint32_t const framesInFlight, VkDevice const logicalDevice);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();

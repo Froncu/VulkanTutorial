@@ -31,4 +31,11 @@ namespace vul
 		glm::vec2 position;
 		glm::vec3 color;
 	};
+
+	struct UniformBufferObject final
+	{
+		glm::mat4 modelMatrix;
+		glm::mat4 viewMatrix;
+		glm::mat4 projectionMatrix;
+	};
 }
