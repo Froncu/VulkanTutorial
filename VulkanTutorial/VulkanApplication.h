@@ -22,17 +22,18 @@ namespace fro
 	{
 	public:
 		VulkanApplication();
-		VulkanApplication(const VulkanApplication&) = delete;
-		VulkanApplication(VulkanApplication&&) noexcept = delete;
 
 		~VulkanApplication();
-
-		VulkanApplication& operator=(const VulkanApplication&) = delete;
-		VulkanApplication& operator=(VulkanApplication&&) noexcept = delete;
 
 		void run();
 
 	private:
+		VulkanApplication(const VulkanApplication&) = delete;
+		VulkanApplication(VulkanApplication&&) noexcept = delete;
+
+		VulkanApplication& operator=(const VulkanApplication&) = delete;
+		VulkanApplication& operator=(VulkanApplication&&) noexcept = delete;
+
 		void render();
 		void recreateSwapChain();
 		std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
