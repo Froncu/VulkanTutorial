@@ -81,7 +81,15 @@ namespace vul
 	[[nodiscard("command buffer ignored!")]]
 	VkCommandBuffer beginSingleTimeCommands(VkCommandPool const commandPool, VkDevice const logicalDevice);
 
+	[[nodiscard("image view ignored!")]]
+	std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>
+	createImageView(VkImage image, VkFormat format, VkDevice logicalDevice);
+
 	void endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice);
+
+	[[nodiscard("texture sampler ignored!")]]
+	std::unique_ptr< VkSampler_T, std::function<void(VkSampler_T*)>>
+	createTextureSampler(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice);
 
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();

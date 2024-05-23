@@ -48,7 +48,8 @@ vul::VulkanApplication::VulkanApplication() :
 	},
 	m_vIndices{ 0, 1, 2, 2, 3, 0 },
 	m_pVertexBuffer{ createVertexBuffer() },
-	m_pIndexBuffer{ createIndexBuffer() }
+	m_pIndexBuffer{ createIndexBuffer() },
+	m_pTextureImageSampler{ createTextureSampler(m_pLogicalDevice.get(), m_PhysicalDevice) }
 {
 	glfwSetWindowUserPointer(m_pWindow.get(), this);
 	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
@@ -56,6 +57,7 @@ vul::VulkanApplication::VulkanApplication() :
 	createUniformBuffers();
 	createDescriptorSets();
 	createTextureImage();
+	createTextureImageView();
 }
 
 vul::VulkanApplication::~VulkanApplication()
@@ -326,16 +328,16 @@ void vul::VulkanApplication::createTextureImage()
 
 	stbi_image_free(pPixels);
 
-	pTextureImage = createImage(m_pLogicalDevice.get(), m_PhysicalDevice,
+	m_pTextureImage = createImage(m_pLogicalDevice.get(), m_PhysicalDevice,
 		textureWidth, textureHeight,
 		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	transitionImageLayout(pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	copyBufferToImage(pStagingBuffer.first.get(), pTextureImage.first.get(), static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
+	transitionImageLayout(m_pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	copyBufferToImage(pStagingBuffer.first.get(), m_pTextureImage.first.get(), static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
 
-	transitionImageLayout(pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	transitionImageLayout(m_pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void vul::VulkanApplication::transitionImageLayout(VkImage image, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -421,6 +423,11 @@ void vul::VulkanApplication::copyBufferToImage(VkBuffer buffer, VkImage image, u
 	);
 
 	endSingleTimeCommands(commandBuffer, m_GraphicsQueue, m_pCommandPool.get(), m_pLogicalDevice.get());
+}
+
+void vul::VulkanApplication::createTextureImageView()
+{
+	m_pTextureImageView = createImageView(m_pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, m_pLogicalDevice.get());
 }
 
 void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)

@@ -44,6 +44,7 @@ namespace vul
 		void createTextureImage();
 		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+		void createTextureImageView();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
@@ -87,6 +88,8 @@ namespace vul
 		std::vector<VkDescriptorSet> m_vDescriptorSets;
 		std::pair<
 			std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>,
-			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> pTextureImage;
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> m_pTextureImage;
+		std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>> m_pTextureImageView;
+		std::unique_ptr<VkSampler_T, std::function<void(VkSampler_T*)>> m_pTextureImageSampler;
 	};
 }

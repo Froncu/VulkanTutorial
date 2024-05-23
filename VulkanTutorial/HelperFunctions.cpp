@@ -110,7 +110,8 @@ VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfa
 		);
 	}
 
-	VkPhysicalDeviceFeatures const enabledPhysicalDeviceFeatures{};
+	VkPhysicalDeviceFeatures enabledPhysicalDeviceFeatures{};
+	enabledPhysicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	std::vector<char const*> vpPhyicalDeviceExtensionNames{};
 	for (std::string_view physicalDeviceExtensionName : vPhyicalDeviceExtensionNames)
@@ -259,38 +260,9 @@ VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice 
 
 std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vul::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
 {
-	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vpSwapChainImageViews{};
-	for (VkImage swapChainImage : vSwapChainImages)
-	{
-		VkImageViewCreateInfo const swapChainImageViewCreateInfo
-		{
-			.sType{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO },
-			.image{ swapChainImage },
-			.viewType{ VK_IMAGE_VIEW_TYPE_2D },
-			.format{ swapChainImageFormat },
-			.components
-			{
-				.r{ VK_COMPONENT_SWIZZLE_IDENTITY },
-				.g{ VK_COMPONENT_SWIZZLE_IDENTITY },
-				.b{ VK_COMPONENT_SWIZZLE_IDENTITY },
-				.a{ VK_COMPONENT_SWIZZLE_IDENTITY }
-			},
-			.subresourceRange
-			{
-				.aspectMask{ VK_IMAGE_ASPECT_COLOR_BIT },
-				.baseMipLevel{ 0 },
-				.levelCount{ 1 },
-				.baseArrayLayer{ 0 },
-				.layerCount{ 1 }
-			}
-		};
-
-		VkImageView swapChainImageView;
-		if (vkCreateImageView(logicalDevice, &swapChainImageViewCreateInfo, nullptr, &swapChainImageView) != VK_SUCCESS)
-			throw std::runtime_error("vkCreateImageView() failed!");
-
-		vpSwapChainImageViews.emplace_back(decltype(vpSwapChainImageViews)::value_type(swapChainImageView, std::bind(vkDestroyImageView, logicalDevice, std::placeholders::_1, nullptr)));
-	}
+	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vpSwapChainImageViews(vSwapChainImages.size());
+	for (std::uint32_t index{}; index < vSwapChainImages.size(); ++index)
+		vpSwapChainImageViews[index] = createImageView(vSwapChainImages[index], swapChainImageFormat, logicalDevice);
 
 	return vpSwapChainImageViews;
 }
@@ -855,6 +827,27 @@ VkCommandBuffer vul::beginSingleTimeCommands(VkCommandPool const commandPool, Vk
 	return commandBuffer;
 }
 
+std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>
+vul::createImageView(VkImage image, VkFormat format, VkDevice logicalDevice)
+{
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView textureImageView;
+	if (vkCreateImageView(logicalDevice, &viewInfo, nullptr, &textureImageView) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateImageView() failed!");
+
+	return { textureImageView, std::bind(vkDestroyImageView, logicalDevice, std::placeholders::_1, nullptr) };
+}
+
 void vul::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice)
 {
 	vkEndCommandBuffer(commandBuffer);
@@ -870,6 +863,34 @@ void vul::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue con
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
+}
+
+std::unique_ptr< VkSampler_T, std::function<void(VkSampler_T*)>>
+vul::createTextureSampler(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice)
+{
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+	VkSampler textureSampler;
+	if (vkCreateSampler(logicalDevice, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
+		throw std::runtime_error("failed to create texture sampler!");
+
+	return { textureSampler, std::bind(vkDestroySampler, logicalDevice, std::placeholders::_1, nullptr) };
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
@@ -1052,6 +1073,9 @@ bool vul::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurf
 {
 	SwapChainSupportDetails const& swapChainSupportDetails{ getSwapChainSupportDetails(physicalDevice, windowSurface) };
 
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
+
 	return
 		getAvailableQueueFamiliesIndices(physicalDevice, windowSurface).isComplete() and
 		std::all_of
@@ -1063,6 +1087,7 @@ bool vul::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurf
 			}
 		) and
 		not swapChainSupportDetails.vFormats.empty() and
-				not swapChainSupportDetails.vPresentModes.empty();
+		not swapChainSupportDetails.vPresentModes.empty() and
+		supportedFeatures.samplerAnisotropy;
 }
 #pragma endregion HelperFunctions
