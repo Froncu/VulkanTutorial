@@ -74,6 +74,15 @@ namespace vul
 	[[nodiscard("created descriptor pool layout ignored!")]]
 	VkDescriptorPool createDescriptorPool(std::uint32_t const framesInFlight, VkDevice const logicalDevice);
 
+	[[nodiscard("created texture image ignored!")]]
+	std::pair<std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+	createImage(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, std::uint32_t const width, std::uint32_t const height, VkFormat const format, VkImageTiling const tiling, VkImageUsageFlags const usage, VkMemoryPropertyFlags const properties);
+
+	[[nodiscard("command buffer ignored!")]]
+	VkCommandBuffer beginSingleTimeCommands(VkCommandPool const commandPool, VkDevice const logicalDevice);
+
+	void endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice);
+
 	[[nodiscard("returned available instance extensions ignored!")]]
 	std::vector<VkExtensionProperties> getAvailableInstanceExtensions();
 

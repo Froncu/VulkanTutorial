@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #undef GLFW_INCLUDE_VULKAN
+
 #include <algorithm>
 #include <stdexcept>
 #include <format>
@@ -725,23 +726,7 @@ vul::createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalD
 
 void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue)
 {
-	VkCommandBufferAllocateInfo const allocationInfo
-	{
-		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO },
-		.commandPool{ commandPool },
-		.level{ VK_COMMAND_BUFFER_LEVEL_PRIMARY },
-		.commandBufferCount{ 1 }
-	};
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(logicalDevice, &allocationInfo, &commandBuffer);
-
-	VkCommandBufferBeginInfo const beginInfo
-	{
-		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO },
-		.flags{ VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT }
-	};
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	VkCommandBuffer const commandBuffer{ beginSingleTimeCommands(commandPool, logicalDevice) };
 
 	VkBufferCopy const copyRegion
 	{
@@ -749,19 +734,7 @@ void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuff
 	};
 	vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, 1, &copyRegion);
 
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo const submitInfo
-	{
-		.sType{ VK_STRUCTURE_TYPE_SUBMIT_INFO },
-		.commandBufferCount{ 1 },
-		.pCommandBuffers{ &commandBuffer }
-	};
-
-	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(graphicsQueue);
-
-	vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
+	endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool, logicalDevice);
 }
 
 VkDescriptorSetLayout vul::createDescriptorSetLayout(VkDevice const logicalDevice)
@@ -808,6 +781,95 @@ VkDescriptorPool vul::createDescriptorPool(std::uint32_t const framesInFlight, V
 		throw std::runtime_error("vkCreateDescriptorPool() failed!");
 
 	return descriptorPool;
+}
+
+std::pair<std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
+vul::createImage(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, std::uint32_t const width, std::uint32_t const height, VkFormat const format, VkImageTiling const tiling, VkImageUsageFlags const usage, VkMemoryPropertyFlags const properties)
+{
+	VkImageCreateInfo const imageInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO },
+		.imageType{ VK_IMAGE_TYPE_2D },
+		.format{ format },
+		.extent
+		{
+			.width{ width },
+			.height{ height },
+			.depth{ 1 }
+		},
+		.mipLevels{ 1 },
+		.arrayLayers{ 1 },
+		.samples{ VK_SAMPLE_COUNT_1_BIT },
+		.tiling{ tiling },
+		.usage{ usage },
+		.sharingMode{ VK_SHARING_MODE_EXCLUSIVE },
+		.initialLayout{ VK_IMAGE_LAYOUT_UNDEFINED },
+	};
+
+	VkImage textureImage;
+	if (vkCreateImage(logicalDevice, &imageInfo, nullptr, &textureImage) != VK_SUCCESS)
+		throw std::runtime_error("vkCreateImage() failed!");
+
+	VkMemoryRequirements memoryRequirements;
+	vkGetImageMemoryRequirements(logicalDevice, textureImage, &memoryRequirements);
+
+	VkMemoryAllocateInfo const allocationInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO },
+		.allocationSize{ memoryRequirements.size },
+		.memoryTypeIndex{ getMemoryType(memoryRequirements.memoryTypeBits, properties, physicalDevice) }
+	};
+
+	VkDeviceMemory textureImageMemory;
+	if (vkAllocateMemory(logicalDevice, &allocationInfo, nullptr, &textureImageMemory) != VK_SUCCESS)
+		throw std::runtime_error("vkAllocateMemory() failed!");
+
+	vkBindImageMemory(logicalDevice, textureImage, textureImageMemory, 0);
+
+	return
+	{
+		std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>(textureImage, std::bind(vkDestroyImage, logicalDevice, std::placeholders::_1, nullptr)),
+		std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>(textureImageMemory, std::bind(vkFreeMemory, logicalDevice, std::placeholders::_1, nullptr))
+	};
+}
+
+VkCommandBuffer vul::beginSingleTimeCommands(VkCommandPool const commandPool, VkDevice const logicalDevice)
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo const beginInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO },
+		.flags{ VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT }
+	};
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void vul::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice)
+{
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo const submitInfo
+	{
+		.sType{ VK_STRUCTURE_TYPE_SUBMIT_INFO },
+		.commandBufferCount{ 1 },
+		.pCommandBuffers{ &commandBuffer }
+	};
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+
+	vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
 }
 
 std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()

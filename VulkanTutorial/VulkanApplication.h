@@ -41,6 +41,9 @@ namespace vul
 		void createUniformBuffers();
 		void updateUniformBuffer();
 		void createDescriptorSets();
+		void createTextureImage();
+		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
@@ -82,5 +85,8 @@ namespace vul
 			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>> m_vpUniformBuffers;
 		std::vector<void*> m_vUniformBuffersMapped;
 		std::vector<VkDescriptorSet> m_vDescriptorSets;
+		std::pair<
+			std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>,
+			std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>> pTextureImage;
 	};
 }

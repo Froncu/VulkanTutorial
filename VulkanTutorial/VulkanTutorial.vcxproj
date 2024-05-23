@@ -62,7 +62,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include;$(ProjectDir)External\STB_Image\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,7 +87,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)External;$(ProjectDir)External\VulkanSDK\Include;$(ProjectDir)External\GLFW\include;$(ProjectDir)External\STB_Image\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
