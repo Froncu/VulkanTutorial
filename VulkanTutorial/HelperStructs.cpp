@@ -16,9 +16,9 @@ VkVertexInputBindingDescription vul::Vertex::getBindingDescription()
 	};
 }
 
-std::array<VkVertexInputAttributeDescription, 2> vul::Vertex::getAttributeDescriptions()
+std::array<VkVertexInputAttributeDescription, 3> vul::Vertex::getAttributeDescriptions()
 {
-	return std::array<VkVertexInputAttributeDescription, 2>
+	return std::array<VkVertexInputAttributeDescription, 3>
 	{
 		VkVertexInputAttributeDescription
 		{
@@ -34,6 +34,14 @@ std::array<VkVertexInputAttributeDescription, 2> vul::Vertex::getAttributeDescri
 			.binding{ 0 },
 			.format{ VK_FORMAT_R32G32B32_SFLOAT },
 			.offset{ offsetof(Vertex, color) }
+		},
+
+		VkVertexInputAttributeDescription
+		{
+			.location{ 2 },
+			.binding{ 0 },
+			.format{ VK_FORMAT_R32G32_SFLOAT },
+			.offset{ offsetof(Vertex, texCoord) }
 		}
 	};
 }

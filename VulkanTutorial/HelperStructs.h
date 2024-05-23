@@ -26,10 +26,11 @@ namespace vul
 	struct Vertex final
 	{
 		static VkVertexInputBindingDescription getBindingDescription();
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
 
 		glm::vec2 position;
 		glm::vec3 color;
+		glm::vec2 texCoord;
 	};
 
 	struct UniformBufferObject final
