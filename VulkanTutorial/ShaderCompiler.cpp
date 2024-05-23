@@ -11,7 +11,7 @@
 #include <regex>
 
 #pragma region Constructors/Destructor
-vul::ShaderCompiler::ShaderCompiler(std::string_view shadersDirectory)
+fro::ShaderCompiler::ShaderCompiler(std::string_view shadersDirectory)
 	: m_ShadersDirectory{ shadersDirectory }
 {
 }
@@ -20,7 +20,7 @@ vul::ShaderCompiler::ShaderCompiler(std::string_view shadersDirectory)
 
 
 #pragma region Operators
-std::vector<std::uint32_t> vul::ShaderCompiler::operator()(std::string_view shaderFileName, shaderc_shader_kind shaderKind)
+std::vector<std::uint32_t> fro::ShaderCompiler::operator()(std::string_view shaderFileName, shaderc_shader_kind shaderKind)
 {
 	std::string const fullFileDirectory{ std::format("{}/{}", m_ShadersDirectory, shaderFileName) };
 
@@ -85,7 +85,7 @@ std::vector<std::uint32_t> vul::ShaderCompiler::operator()(std::string_view shad
 
 
 #pragma region PublicMethods
-void vul::ShaderCompiler::setShadersDirectory(std::string_view shadersDirectory)
+void fro::ShaderCompiler::setShadersDirectory(std::string_view shadersDirectory)
 {
 	m_ShadersDirectory = shadersDirectory;
 }

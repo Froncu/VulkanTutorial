@@ -71,7 +71,8 @@
       <AdditionalLibraryDirectories>$(ProjectDir)External\VulkanSDK\Lib;$(ProjectDir)External\GLFW\lib-vc2022;$(ProjectDir)External\VLD\lib\Win64;$(ProjectDir)External\VLD\bin\Win64</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)External\VLD\bin\Win64\*" "$(TargetDir)" /y /q</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -104,12 +105,15 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
     <ClCompile Include="VulkanApplication.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HelperFunctions.h" />
     <ClInclude Include="HelperStructs.h" />
     <ClInclude Include="ShaderCompiler.h" />
+    <ClInclude Include="Typenames.hpp" />
     <ClInclude Include="VulkanApplication.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

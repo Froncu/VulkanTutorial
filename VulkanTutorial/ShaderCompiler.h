@@ -3,7 +3,7 @@
 #include <shaderc/shaderc.hpp>
 #include <xstring>
 
-namespace vul
+namespace fro
 {
 	class ShaderCompiler final
 	{

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HelperStructs.h"
+#include "Window.h"
 
 #include <Vulkan/vulkan_core.h>
 #include <memory>
@@ -11,7 +12,7 @@
 
 struct GLFWwindow;
 
-namespace vul
+namespace fro
 {
 	constexpr int g_WindowWidth{ 800 };
 	constexpr int g_WindowHeight{ 600 };
@@ -47,7 +48,8 @@ namespace vul
 		void createTextureImageView();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> const m_pWindow;
+		Window const m_Window{ "Vulkan", g_WindowWidth, g_WindowHeight };
+
 		std::unique_ptr<VkInstance_T, std::function<void(VkInstance_T*)>> const m_pInstance;
 		std::unique_ptr<VkSurfaceKHR_T, std::function<void(VkSurfaceKHR_T*)>> const m_pWindowSurface;
 		VkPhysicalDevice const m_PhysicalDevice;

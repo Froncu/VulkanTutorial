@@ -14,15 +14,14 @@
 #include <chrono>
 
 #pragma region Constructors/Destructor
-vul::VulkanApplication::VulkanApplication() :
-	m_pWindow{ createWindow(g_WindowWidth, g_WindowHeight, "Vulkan"), glfwDestroyWindow },
+fro::VulkanApplication::VulkanApplication():
 	m_pInstance{ createInstance(), std::bind(vkDestroyInstance, std::placeholders::_1, nullptr) },
-	m_pWindowSurface{ createWindowSurface(m_pInstance.get(), m_pWindow.get()), std::bind(vkDestroySurfaceKHR, m_pInstance.get(), std::placeholders::_1, nullptr) },
+	m_pWindowSurface{ createWindowSurface(m_pInstance.get(), m_Window.getWindow()), std::bind(vkDestroySurfaceKHR, m_pInstance.get(), std::placeholders::_1, nullptr) },
 	m_PhysicalDevice{ pickSuitedPhysicalDevice(m_pInstance.get(), m_pWindowSurface.get(), vPhysicalDeviceExtensionNames) },
 	m_pLogicalDevice{ createLogicalDevice(m_PhysicalDevice, m_pWindowSurface.get(), vPhysicalDeviceExtensionNames), std::bind(vkDestroyDevice, std::placeholders::_1, nullptr) },
 	m_GraphicsQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice, m_pWindowSurface.get()).graphics.value(), 0) },
 	m_PresentQueue{ getHandleToQueue(m_pLogicalDevice.get(), getAvailableQueueFamiliesIndices(m_PhysicalDevice, m_pWindowSurface.get()).present.value(), 0) },
-	m_pSwapChain{ createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
+	m_pSwapChain{ createSwapChain(m_Window.getWindow(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
 	m_vSwapChainImages{ getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get()) },
 	m_vpSwapChainImageViews{ createSwapChainImageViews(m_vSwapChainImages, m_SwapChainImageFormat, m_pLogicalDevice.get()) },
 	m_pDescriptorSetLayout{ createDescriptorSetLayout(m_pLogicalDevice.get()), std::bind(vkDestroyDescriptorSetLayout, m_pLogicalDevice.get(), std::placeholders::_1, nullptr) },
@@ -51,8 +50,8 @@ vul::VulkanApplication::VulkanApplication() :
 	m_pIndexBuffer{ createIndexBuffer() },
 	m_pTextureImageSampler{ createTextureSampler(m_pLogicalDevice.get(), m_PhysicalDevice) }
 {
-	glfwSetWindowUserPointer(m_pWindow.get(), this);
-	glfwSetFramebufferSizeCallback(m_pWindow.get(), framebufferResizeCallback);
+	glfwSetWindowUserPointer(m_Window.getWindow(), this);
+	glfwSetFramebufferSizeCallback(m_Window.getWindow(), framebufferResizeCallback);
 
 	createUniformBuffers();
 	createTextureImage();
@@ -60,7 +59,7 @@ vul::VulkanApplication::VulkanApplication() :
 	createDescriptorSets();
 }
 
-vul::VulkanApplication::~VulkanApplication()
+fro::VulkanApplication::~VulkanApplication()
 {
 	glfwTerminate();
 }
@@ -69,9 +68,9 @@ vul::VulkanApplication::~VulkanApplication()
 
 
 #pragma region PublicMethods
-void vul::VulkanApplication::run()
+void fro::VulkanApplication::run()
 {
-	while (!glfwWindowShouldClose(m_pWindow.get()))
+	while (!glfwWindowShouldClose(m_Window.getWindow()))
 	{
 		glfwPollEvents();
 		render();
@@ -80,7 +79,7 @@ void vul::VulkanApplication::run()
 	vkDeviceWaitIdle(m_pLogicalDevice.get());
 }
 
-void vul::VulkanApplication::render()
+void fro::VulkanApplication::render()
 {
 	VkFence aFences[]{ m_vpInFlightFences[m_CurrentFrame].get()};
 	vkWaitForFences(m_pLogicalDevice.get(), 1, aFences, VK_TRUE, UINT64_MAX);
@@ -144,15 +143,15 @@ void vul::VulkanApplication::render()
 	m_CurrentFrame = (m_CurrentFrame + 1) % m_FramesInFlight;
 }
 
-void vul::VulkanApplication::recreateSwapChain()
+void fro::VulkanApplication::recreateSwapChain()
 {
 	int width{};
 	int height{};
 
-	glfwGetFramebufferSize(m_pWindow.get(), &width, &height);
+	glfwGetFramebufferSize(m_Window.getWindow(), &width, &height);
 	while (width == 0 || height == 0) 
 	{
-		glfwGetFramebufferSize(m_pWindow.get(), &width, &height);
+		glfwGetFramebufferSize(m_Window.getWindow(), &width, &height);
 		glfwWaitEvents();
 	}
 
@@ -165,7 +164,7 @@ void vul::VulkanApplication::recreateSwapChain()
 
 	m_pSwapChain =
 	{
-		createSwapChain(m_pWindow.get(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent), 
+		createSwapChain(m_Window.getWindow(), m_PhysicalDevice, m_pWindowSurface.get(), m_pLogicalDevice.get(), m_SwapChainImageFormat, m_SwapChainImageExtent),
 		std::bind(vkDestroySwapchainKHR, m_pLogicalDevice.get(), std::placeholders::_1, nullptr)
 	};
 	m_vSwapChainImages = getSwapChainImages(m_pLogicalDevice.get(), m_pSwapChain.get());
@@ -174,7 +173,7 @@ void vul::VulkanApplication::recreateSwapChain()
 }
 
 std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-vul::VulkanApplication::createVertexBuffer()
+fro::VulkanApplication::createVertexBuffer()
 {
 	VkDeviceSize const bufferSize{ sizeof(m_vVertices[0]) * m_vVertices.size() };
 
@@ -203,7 +202,7 @@ vul::VulkanApplication::createVertexBuffer()
 }
 
 std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-vul::VulkanApplication::createIndexBuffer()
+fro::VulkanApplication::createIndexBuffer()
 {
 	VkDeviceSize const bufferSize{ sizeof(m_vIndices[0]) * m_vIndices.size() };
 
@@ -229,7 +228,7 @@ vul::VulkanApplication::createIndexBuffer()
 	return pIndexBuffer;
 }
 
-void vul::VulkanApplication::createUniformBuffers()
+void fro::VulkanApplication::createUniformBuffers()
 {
 	VkDeviceSize const bufferSize{ sizeof(UniformBufferObject) };
 
@@ -246,7 +245,7 @@ void vul::VulkanApplication::createUniformBuffers()
 	}
 }
 
-void vul::VulkanApplication::updateUniformBuffer()
+void fro::VulkanApplication::updateUniformBuffer()
 {
 	static auto startTime{ std::chrono::high_resolution_clock::now() };
 
@@ -265,7 +264,7 @@ void vul::VulkanApplication::updateUniformBuffer()
 	memcpy(m_vUniformBuffersMapped[m_CurrentFrame], &uniformBufferObject, sizeof(uniformBufferObject));
 }
 
-void vul::VulkanApplication::createDescriptorSets()
+void fro::VulkanApplication::createDescriptorSets()
 {
 	std::vector<VkDescriptorSetLayout> vLayouts(m_FramesInFlight, m_pDescriptorSetLayout.get());
 	VkDescriptorSetAllocateInfo const allocationInfo
@@ -316,7 +315,7 @@ void vul::VulkanApplication::createDescriptorSets()
 	}
 }
 
-void vul::VulkanApplication::createTextureImage()
+void fro::VulkanApplication::createTextureImage()
 {
 	int textureWidth;
 	int textureHeight;
@@ -354,7 +353,7 @@ void vul::VulkanApplication::createTextureImage()
 	transitionImageLayout(m_pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void vul::VulkanApplication::transitionImageLayout(VkImage image, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout)
+void fro::VulkanApplication::transitionImageLayout(VkImage image, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
 	VkCommandBuffer const commandBuffer{ beginSingleTimeCommands(m_pCommandPool.get(), m_pLogicalDevice.get()) };
 
@@ -406,7 +405,7 @@ void vul::VulkanApplication::transitionImageLayout(VkImage image, VkFormat, VkIm
 	endSingleTimeCommands(commandBuffer, m_GraphicsQueue, m_pCommandPool.get(), m_pLogicalDevice.get());
 }
 
-void vul::VulkanApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void fro::VulkanApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands(m_pCommandPool.get(), m_pLogicalDevice.get());
 
@@ -439,12 +438,12 @@ void vul::VulkanApplication::copyBufferToImage(VkBuffer buffer, VkImage image, u
 	endSingleTimeCommands(commandBuffer, m_GraphicsQueue, m_pCommandPool.get(), m_pLogicalDevice.get());
 }
 
-void vul::VulkanApplication::createTextureImageView()
+void fro::VulkanApplication::createTextureImageView()
 {
 	m_pTextureImageView = createImageView(m_pTextureImage.first.get(), VK_FORMAT_R8G8B8A8_SRGB, m_pLogicalDevice.get());
 }
 
-void vul::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)
+void fro::VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int, int)
 {
 	VulkanApplication* pApp{ reinterpret_cast<VulkanApplication*>(glfwGetWindowUserPointer(window)) };
 	pApp->m_FramebufferResized = true;

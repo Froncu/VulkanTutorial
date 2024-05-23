@@ -1,13 +1,13 @@
 #include "HelperStructs.h"
 
-bool vul::QueueFamilyIndices::isComplete() const
+bool fro::QueueFamilyIndices::isComplete() const
 {
 	return
 		graphics.has_value() and
 		present.has_value();
 }
 
-VkVertexInputBindingDescription vul::Vertex::getBindingDescription()
+VkVertexInputBindingDescription fro::Vertex::getBindingDescription()
 {
 	return VkVertexInputBindingDescription
 	{
@@ -16,7 +16,7 @@ VkVertexInputBindingDescription vul::Vertex::getBindingDescription()
 	};
 }
 
-std::array<VkVertexInputAttributeDescription, 3> vul::Vertex::getAttributeDescriptions()
+std::array<VkVertexInputAttributeDescription, 3> fro::Vertex::getAttributeDescriptions()
 {
 	return std::array<VkVertexInputAttributeDescription, 3>
 	{

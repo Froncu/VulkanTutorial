@@ -7,7 +7,7 @@
 
 struct GLFWwindow;
 
-namespace vul
+namespace fro
 {
 	[[nodiscard("handle to created window ignored!")]]
 	GLFWwindow* createWindow(int const width, int const height, std::string_view const title);

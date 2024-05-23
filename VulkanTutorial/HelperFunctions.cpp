@@ -12,7 +12,7 @@
 #include <set>
 
 #pragma region HelperFunctions
-GLFWwindow* vul::createWindow(int const width, int const height, std::string_view const title)
+GLFWwindow* fro::createWindow(int const width, int const height, std::string_view const title)
 {
 	glfwInit();
 
@@ -22,7 +22,7 @@ GLFWwindow* vul::createWindow(int const width, int const height, std::string_vie
 	return glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
 }
 
-VkInstance vul::createInstance()
+VkInstance fro::createInstance()
 {
 #ifndef NDEBUG
 	std::vector const vRequiredValidationLayerNames{ "VK_LAYER_KHRONOS_validation" };
@@ -58,7 +58,7 @@ VkInstance vul::createInstance()
 	return instance;
 }
 
-VkSurfaceKHR vul::createWindowSurface(VkInstance const instance, GLFWwindow* const pWindow)
+VkSurfaceKHR fro::createWindowSurface(VkInstance const instance, GLFWwindow* const pWindow)
 {
 	VkSurfaceKHR windowSurface;
 	if (glfwCreateWindowSurface(instance, pWindow, nullptr, &windowSurface) != VkResult::VK_SUCCESS)
@@ -67,7 +67,7 @@ VkSurfaceKHR vul::createWindowSurface(VkInstance const instance, GLFWwindow* con
 	return windowSurface;
 }
 
-VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
+VkPhysicalDevice fro::pickSuitedPhysicalDevice(VkInstance const instance, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
 {
 	std::vector<VkPhysicalDevice> const vAvailablePhysicalDevices{ getAvailablePhysicalDevices(instance) };
 
@@ -89,7 +89,7 @@ VkPhysicalDevice vul::pickSuitedPhysicalDevice(VkInstance const instance, VkSurf
 	return *suitablePhysicalDeviceIterator;
 }
 
-VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
+VkDevice fro::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
 {
 	QueueFamilyIndices const availableQueueFamilyIndices{ getAvailableQueueFamiliesIndices(physicalDevice, windowSurface) };
 
@@ -134,7 +134,7 @@ VkDevice vul::createLogicalDevice(VkPhysicalDevice const physicalDevice, VkSurfa
 	return logicalDevice;
 }
 
-VkQueue vul::getHandleToQueue(VkDevice const logicalDevice, std::uint32_t const queueFamilyIndex, std::uint32_t const queueIndex)
+VkQueue fro::getHandleToQueue(VkDevice const logicalDevice, std::uint32_t const queueFamilyIndex, std::uint32_t const queueIndex)
 {
 	VkQueue queueFamily;
 	vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queueFamily);
@@ -142,7 +142,7 @@ VkQueue vul::getHandleToQueue(VkDevice const logicalDevice, std::uint32_t const 
 	return queueFamily;
 }
 
-VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, VkDevice const logicalDevice, VkFormat& swapChainImageFormat, VkExtent2D& swapChainImageExtent)
+VkSwapchainKHR fro::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, VkDevice const logicalDevice, VkFormat& swapChainImageFormat, VkExtent2D& swapChainImageExtent)
 {
 	SwapChainSupportDetails const swapChainSupportDetails{ getSwapChainSupportDetails(physicalDevice, windowSurface) };
 
@@ -258,7 +258,7 @@ VkSwapchainKHR vul::createSwapChain(GLFWwindow* const pWindow, VkPhysicalDevice 
 	return swapChain;
 }
 
-std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vul::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
+std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> fro::createSwapChainImageViews(std::vector<VkImage> const& vSwapChainImages, VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
 {
 	std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> vpSwapChainImageViews(vSwapChainImages.size());
 	for (std::uint32_t index{}; index < vSwapChainImages.size(); ++index)
@@ -267,7 +267,7 @@ std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>>
 	return vpSwapChainImageViews;
 }
 
-VkShaderModule vul::createShaderModule(std::vector<std::uint32_t> const& vBytecode, VkDevice const logicalDevice)
+VkShaderModule fro::createShaderModule(std::vector<std::uint32_t> const& vBytecode, VkDevice const logicalDevice)
 {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo
 	{
@@ -283,7 +283,7 @@ VkShaderModule vul::createShaderModule(std::vector<std::uint32_t> const& vByteco
 	return shaderModule;
 }
 
-VkRenderPass vul::createRenderPass(VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
+VkRenderPass fro::createRenderPass(VkFormat const swapChainImageFormat, VkDevice const logicalDevice)
 {
 	VkAttachmentDescription const colorAttachmentDescription
 	{
@@ -335,7 +335,7 @@ VkRenderPass vul::createRenderPass(VkFormat const swapChainImageFormat, VkDevice
 	return renderPass;
 }
 
-VkPipelineLayout vul::createPipelineLayout(VkDevice const logicalDevice, VkDescriptorSetLayout const descriptorSetLayout)
+VkPipelineLayout fro::createPipelineLayout(VkDevice const logicalDevice, VkDescriptorSetLayout const descriptorSetLayout)
 {
 	VkPipelineLayoutCreateInfo const pipelineLayoutCreateInfo
 	{
@@ -351,7 +351,7 @@ VkPipelineLayout vul::createPipelineLayout(VkDevice const logicalDevice, VkDescr
 	return pipelineLayout;
 }
 
-VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass)
+VkPipeline fro::createPipeline(VkDevice const logicalDevice, VkExtent2D const swapChainExtent, VkPipelineLayout const pipelineLayout, VkRenderPass const renderPass)
 {
 	ShaderCompiler compiler{ "Shaders" };
 
@@ -491,7 +491,7 @@ VkPipeline vul::createPipeline(VkDevice const logicalDevice, VkExtent2D const sw
 	return pipeline;
 }
 
-std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> vul::createFramebuffers(std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const& vSwapChainImageViews, VkRenderPass const renderPass, VkExtent2D const swapChainExtent, VkDevice const logicalDevice)
+std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> fro::createFramebuffers(std::vector<std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>> const& vSwapChainImageViews, VkRenderPass const renderPass, VkExtent2D const swapChainExtent, VkDevice const logicalDevice)
 {
 	std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> vpSwapChainFrameBuffers(vSwapChainImageViews.size());
 
@@ -520,7 +520,7 @@ std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*
 	return vpSwapChainFrameBuffers;
 }
 
-VkCommandPool vul::createCommandPool(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const surface, VkDevice const logicalDevice)
+VkCommandPool fro::createCommandPool(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const surface, VkDevice const logicalDevice)
 {
 	QueueFamilyIndices const availableQueueFamilyIndices{ getAvailableQueueFamiliesIndices(physicalDevice, surface) };
 
@@ -538,7 +538,7 @@ VkCommandPool vul::createCommandPool(VkPhysicalDevice const physicalDevice, VkSu
 	return commandPool;
 }
 
-std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const commandPool, VkDevice const logicalDevice, std::uint32_t const framesInFlight)
+std::vector<VkCommandBuffer> fro::createCommandBuffers(VkCommandPool const commandPool, VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkCommandBufferAllocateInfo const allocateInfo
 	{
@@ -555,7 +555,7 @@ std::vector<VkCommandBuffer> vul::createCommandBuffers(VkCommandPool const comma
 	return vCommandBuffers;
 }
 
-void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices, VkPipelineLayout const pipelineLayout, std::vector<VkDescriptorSet> const& vDescriptorSets, std::uint32_t const currentFrame)
+void fro::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t const imageIndex, VkRenderPass const renderPass, std::vector<std::unique_ptr<VkFramebuffer_T, std::function<void(VkFramebuffer_T*)>>> const& vpSwapChainFramebuffers, VkExtent2D const swapChainExtent, VkPipeline const pipeline, VkBuffer const vertexBuffer, VkBuffer const indexBuffer, std::vector<std::uint16_t> const& vIndices, VkPipelineLayout const pipelineLayout, std::vector<VkDescriptorSet> const& vDescriptorSets, std::uint32_t const currentFrame)
 {
 	VkCommandBufferBeginInfo const commandBufferBeginInfo
 	{
@@ -615,7 +615,7 @@ void vul::recordCommandBuffer(VkCommandBuffer const commandBuffer, std::uint32_t
 		throw std::runtime_error("vkEndCommandBuffer() failed!");
 }
 
-std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> vul::createSemaphores(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
+std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>> fro::createSemaphores(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkSemaphoreCreateInfo const semaphoreCreateInfo
 	{
@@ -635,7 +635,7 @@ std::vector<std::unique_ptr<VkSemaphore_T, std::function<void(VkSemaphore_T*)>>>
 	return vpSemaphores;
 }
 
-std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vul::createFences(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
+std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> fro::createFences(VkDevice const logicalDevice, std::uint32_t const framesInFlight)
 {
 	VkFenceCreateInfo const fenceCreateInfo
 	{
@@ -657,7 +657,7 @@ std::vector<std::unique_ptr<VkFence_T, std::function<void(VkFence_T*)>>> vul::cr
 }
 
 std::pair<std::unique_ptr<VkBuffer_T, std::function<void(VkBuffer_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-vul::createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, VkDeviceSize const size, VkBufferUsageFlags const usageFlags, VkMemoryPropertyFlags const properties)
+fro::createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, VkDeviceSize const size, VkBufferUsageFlags const usageFlags, VkMemoryPropertyFlags const properties)
 {
 	VkBufferCreateInfo const bufferCreateInfo
 	{
@@ -696,7 +696,7 @@ vul::createBuffer(VkDevice const logicalDevice, VkPhysicalDevice const physicalD
 	};
 }
 
-void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue)
+void fro::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuffer, VkDeviceSize const size, VkCommandPool const commandPool, VkDevice const logicalDevice, VkQueue const graphicsQueue)
 {
 	VkCommandBuffer const commandBuffer{ beginSingleTimeCommands(commandPool, logicalDevice) };
 
@@ -709,7 +709,7 @@ void vul::copyBuffer(VkBuffer const sourceBuffer, VkBuffer const destinationBuff
 	endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool, logicalDevice);
 }
 
-VkDescriptorSetLayout vul::createDescriptorSetLayout(VkDevice const logicalDevice)
+VkDescriptorSetLayout fro::createDescriptorSetLayout(VkDevice const logicalDevice)
 {
 	VkDescriptorSetLayoutBinding const uboLayoutBinding
 	{
@@ -738,7 +738,7 @@ VkDescriptorSetLayout vul::createDescriptorSetLayout(VkDevice const logicalDevic
 	return descriptorSetLayout;
 }
 
-VkDescriptorPool vul::createDescriptorPool(std::uint32_t const framesInFlight, VkDevice const logicalDevice)
+VkDescriptorPool fro::createDescriptorPool(std::uint32_t const framesInFlight, VkDevice const logicalDevice)
 {
 	VkDescriptorPoolSize const poolSize
 	{
@@ -766,7 +766,7 @@ VkDescriptorPool vul::createDescriptorPool(std::uint32_t const framesInFlight, V
 }
 
 std::pair<std::unique_ptr<VkImage_T, std::function<void(VkImage_T*)>>, std::unique_ptr<VkDeviceMemory_T, std::function<void(VkDeviceMemory_T*)>>>
-vul::createImage(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, std::uint32_t const width, std::uint32_t const height, VkFormat const format, VkImageTiling const tiling, VkImageUsageFlags const usage, VkMemoryPropertyFlags const properties)
+fro::createImage(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice, std::uint32_t const width, std::uint32_t const height, VkFormat const format, VkImageTiling const tiling, VkImageUsageFlags const usage, VkMemoryPropertyFlags const properties)
 {
 	VkImageCreateInfo const imageInfo
 	{
@@ -815,7 +815,7 @@ vul::createImage(VkDevice const logicalDevice, VkPhysicalDevice const physicalDe
 	};
 }
 
-VkCommandBuffer vul::beginSingleTimeCommands(VkCommandPool const commandPool, VkDevice const logicalDevice)
+VkCommandBuffer fro::beginSingleTimeCommands(VkCommandPool const commandPool, VkDevice const logicalDevice)
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -838,7 +838,7 @@ VkCommandBuffer vul::beginSingleTimeCommands(VkCommandPool const commandPool, Vk
 }
 
 std::unique_ptr<VkImageView_T, std::function<void(VkImageView_T*)>>
-vul::createImageView(VkImage image, VkFormat format, VkDevice logicalDevice)
+fro::createImageView(VkImage image, VkFormat format, VkDevice logicalDevice)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -858,7 +858,7 @@ vul::createImageView(VkImage image, VkFormat format, VkDevice logicalDevice)
 	return { textureImageView, std::bind(vkDestroyImageView, logicalDevice, std::placeholders::_1, nullptr) };
 }
 
-void vul::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice)
+void fro::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue const graphicsQueue, VkCommandPool const commandPool, VkDevice const logicalDevice)
 {
 	vkEndCommandBuffer(commandBuffer);
 
@@ -876,7 +876,7 @@ void vul::endSingleTimeCommands(VkCommandBuffer const commandBuffer, VkQueue con
 }
 
 std::unique_ptr< VkSampler_T, std::function<void(VkSampler_T*)>>
-vul::createTextureSampler(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice)
+fro::createTextureSampler(VkDevice const logicalDevice, VkPhysicalDevice const physicalDevice)
 {
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -903,7 +903,7 @@ vul::createTextureSampler(VkDevice const logicalDevice, VkPhysicalDevice const p
 	return { textureSampler, std::bind(vkDestroySampler, logicalDevice, std::placeholders::_1, nullptr) };
 }
 
-std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
+std::vector<VkExtensionProperties> fro::getAvailableInstanceExtensions()
 {
 	std::uint32_t availableInstanceExtensionCount;
 	vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, nullptr);
@@ -913,7 +913,7 @@ std::vector<VkExtensionProperties> vul::getAvailableInstanceExtensions()
 	return vAvaialbleInstanceExtensions;
 }
 
-std::vector<VkLayerProperties> vul::getAvailableValidationLayers()
+std::vector<VkLayerProperties> fro::getAvailableValidationLayers()
 {
 	std::uint32_t availableValidationLayersCount;
 	vkEnumerateInstanceLayerProperties(&availableValidationLayersCount, nullptr);
@@ -923,7 +923,7 @@ std::vector<VkLayerProperties> vul::getAvailableValidationLayers()
 	return vAvaialbleValidationLayers;
 }
 
-std::vector<VkPhysicalDevice> vul::getAvailablePhysicalDevices(VkInstance const instance)
+std::vector<VkPhysicalDevice> fro::getAvailablePhysicalDevices(VkInstance const instance)
 {
 	std::uint32_t availablePhysicalDevicesCount;
 	vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, nullptr);
@@ -933,7 +933,7 @@ std::vector<VkPhysicalDevice> vul::getAvailablePhysicalDevices(VkInstance const 
 	return vAvailablePhysicalDevices;
 }
 
-std::vector<VkExtensionProperties> vul::getAvailablePhysicalDeviceExtensions(VkPhysicalDevice const physicalDevice)
+std::vector<VkExtensionProperties> fro::getAvailablePhysicalDeviceExtensions(VkPhysicalDevice const physicalDevice)
 {
 	std::uint32_t availablePhysicalDeviceExtensionCount;
 	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availablePhysicalDeviceExtensionCount, nullptr);
@@ -943,7 +943,7 @@ std::vector<VkExtensionProperties> vul::getAvailablePhysicalDeviceExtensions(VkP
 	return vAvaialblePhysicalDeviceExtensions;
 }
 
-std::vector<VkQueueFamilyProperties> vul::getAvailableQueueFamilies(VkPhysicalDevice const physicalDevice)
+std::vector<VkQueueFamilyProperties> fro::getAvailableQueueFamilies(VkPhysicalDevice const physicalDevice)
 {
 	std::uint32_t availableQueueFamiliesCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &availableQueueFamiliesCount, nullptr);
@@ -953,7 +953,7 @@ std::vector<VkQueueFamilyProperties> vul::getAvailableQueueFamilies(VkPhysicalDe
 	return vAvailableQueueFamilies;
 }
 
-std::vector<VkSurfaceFormatKHR> vul::getAvailablePhysicalDeviceWindowSurfaceFormats(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
+std::vector<VkSurfaceFormatKHR> fro::getAvailablePhysicalDeviceWindowSurfaceFormats(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
 	std::uint32_t availableSurfaceFormatCount;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, windowSurface, &availableSurfaceFormatCount, nullptr);
@@ -963,7 +963,7 @@ std::vector<VkSurfaceFormatKHR> vul::getAvailablePhysicalDeviceWindowSurfaceForm
 	return vAvailableSurfaceFormats;
 }
 
-std::vector<VkPresentModeKHR> vul::getAvailablePhysicalDeviceWindowSurfacePresentModes(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
+std::vector<VkPresentModeKHR> fro::getAvailablePhysicalDeviceWindowSurfacePresentModes(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
 	std::uint32_t availableSurfacePresentModeCount;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, windowSurface, &availableSurfacePresentModeCount, nullptr);
@@ -973,7 +973,7 @@ std::vector<VkPresentModeKHR> vul::getAvailablePhysicalDeviceWindowSurfacePresen
 	return vAvailableSurfacePresentModes;
 }
 
-std::vector<VkImage> vul::getSwapChainImages(VkDevice const logicalDevice, VkSwapchainKHR const swapChain)
+std::vector<VkImage> fro::getSwapChainImages(VkDevice const logicalDevice, VkSwapchainKHR const swapChain)
 {
 	std::uint32_t swapChainImageCount;
 	vkGetSwapchainImagesKHR(logicalDevice, swapChain, &swapChainImageCount, nullptr);
@@ -983,7 +983,7 @@ std::vector<VkImage> vul::getSwapChainImages(VkDevice const logicalDevice, VkSwa
 	return vSwapChainImages;
 }
 
-vul::QueueFamilyIndices vul::getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
+fro::QueueFamilyIndices fro::getAvailableQueueFamiliesIndices(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
 	std::vector<VkQueueFamilyProperties> const vAvailableQueueFamilies{ getAvailableQueueFamilies(physicalDevice) };
 
@@ -1009,7 +1009,7 @@ vul::QueueFamilyIndices vul::getAvailableQueueFamiliesIndices(VkPhysicalDevice c
 	return availableQueueFamilyIndices;
 }
 
-vul::SwapChainSupportDetails vul::getSwapChainSupportDetails(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
+fro::SwapChainSupportDetails fro::getSwapChainSupportDetails(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface)
 {
 	VkSurfaceCapabilitiesKHR windowSurfaceCapabilities;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, windowSurface, &windowSurfaceCapabilities);
@@ -1024,7 +1024,7 @@ vul::SwapChainSupportDetails vul::getSwapChainSupportDetails(VkPhysicalDevice co
 	return swapChainSupportDetails;
 }
 
-std::uint32_t vul::getMemoryType(std::uint32_t const typeFilter, VkMemoryPropertyFlags const memoryProperties, VkPhysicalDevice const physicalDevice)
+std::uint32_t fro::getMemoryType(std::uint32_t const typeFilter, VkMemoryPropertyFlags const memoryProperties, VkPhysicalDevice const physicalDevice)
 {
 	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
@@ -1037,7 +1037,7 @@ std::uint32_t vul::getMemoryType(std::uint32_t const typeFilter, VkMemoryPropert
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-bool vul::isInstanceExtensionAvailable(std::string_view const instanceExtensionName)
+bool fro::isInstanceExtensionAvailable(std::string_view const instanceExtensionName)
 {
 	std::vector<VkExtensionProperties> const vAvailableInstanceExtensions{ getAvailableInstanceExtensions() };
 
@@ -1051,7 +1051,7 @@ bool vul::isInstanceExtensionAvailable(std::string_view const instanceExtensionN
 	);
 }
 
-bool vul::isValidationLayerAvailable(std::string_view const validationLayerName)
+bool fro::isValidationLayerAvailable(std::string_view const validationLayerName)
 {
 	std::vector<VkLayerProperties> const vAvaialbleValidationLayers{ getAvailableValidationLayers() };
 
@@ -1065,7 +1065,7 @@ bool vul::isValidationLayerAvailable(std::string_view const validationLayerName)
 	);
 }
 
-bool vul::isPhysicalDeviceExtensionAvailable(std::string_view const physicalDeviceExtensionName, VkPhysicalDevice physicalDevice)
+bool fro::isPhysicalDeviceExtensionAvailable(std::string_view const physicalDeviceExtensionName, VkPhysicalDevice physicalDevice)
 {
 	std::vector<VkExtensionProperties> const vAvailablePhysicalDeviceExtensions{ getAvailablePhysicalDeviceExtensions(physicalDevice) };
 
@@ -1079,7 +1079,7 @@ bool vul::isPhysicalDeviceExtensionAvailable(std::string_view const physicalDevi
 	);
 }
 
-bool vul::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
+bool fro::isPhysicalDeviceSuitable(VkPhysicalDevice const physicalDevice, VkSurfaceKHR const windowSurface, std::vector<std::string_view> const& vPhyicalDeviceExtensionNames)
 {
 	SwapChainSupportDetails const& swapChainSupportDetails{ getSwapChainSupportDetails(physicalDevice, windowSurface) };
 

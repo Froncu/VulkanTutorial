@@ -1,13 +1,17 @@
 #include "VulkanApplication.h"
 
+#include <GLFW/glfw3.h>
+
 #include <stdexcept>
 #include <iostream>
 
 int main()
 {
+	glfwInit();
+
 	try
 	{
-		vul::VulkanApplication().run();
+		fro::VulkanApplication().run();
 	}
 	catch (const std::exception& exception)
 	{
